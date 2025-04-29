@@ -3,6 +3,11 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+# Ignore files that contain private keys or secrets
+/Dejan_Camilleri_SWD63B/boxwood-night-449813-s9-0dd681928a57.json
+/Dejan_Camilleri_SWD63B/appsettings.json
+/Dejan_Camilleri_SWD63B/secrets.json
+
 # User-specific files
 *.rsuser
 *.suo
