@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "boxwood-night-449813-s9",
+  "private_key_id": "0dd681928a5721a103181f392adf004b6a3c5255",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQCrljqBr2wvVfkr\ngUHYM4PNEnvX7PxCIX5JOC1u6gUIvqvL9hgCz7+VbZ3tMLz9NQ5pDdbWKupnkike\nPpE+AQlb3++qq8kvqS+K5YNzj0FZPGxm/e0HOxrixtif5tivyrFEtdCCBOcEXmM5\nT8ZF4b8FdpFLgOiHoI/wUSo3enoiYDQWI7eHSCBm2NaatIEtoAR5lfiF+8Xl889x\nODsOd7UaVHpRBWUpKIIhyPX8iz8KScKNCI5/oqb4Od+NUGUyyps0UsvzRx7ohrQR\n4p8/fxM0FsP3eZkLCflv+AuzFaOcyl0XRGpVMRcsgIUaYUc0Rc7s6wMWkq4YR5Vh\n/3eqkjHBAgMBAAECggEAJlyD4BKUIVEbT/qp+egqg2KqhW/aRf6u+TeyEKYJUhcu\n2X6/h4Fi18mWET1gQ0vlWN9bNK6LkXQ/9R8P4cjhisTaFFIrvJgapPcDGIbimUzE\n/5GtuHwiWqkSLU2zDDpIv4/WefsWmwdvL5UCQwVha5tCiJrdYdUn2RaMVbLwM1bo\n932XTv3zNe4/L9zPooT+g4WRULIFb64aC5PTo6rj449/TnmSHKbQSue4OTeN9y2N\nUVPCCYd098EJBTtcFOihn5I3/jLA/3MfS/ahNaiVZ/DuCL9fmy5sZBbXqaB7WBNB\ngH2cobg24iZyIdofgdzbhHE7iPeMZSU90euIflp5QQKBgQDcpECFkP2SUSqPTepU\nWoJ/POqJdDoG2zCRAV6wrndyLhkQ4SIKHqcBn5vfWWXw4XNzuWIKKYhNbd37enQC\nH0o+bvLaWKcE0Jn8lsXNZAWvpb21kGV+b2AK94S7RhUnI/r93TpAxdV2QTIlcSLa\ngB5AKu0a/S7lnQfIgmULBmoJXQKBgQDHFYVJXUjE8uvCr3jDp6JKLCy2UM61TEGA\nYcUB0pLBKu6xzoBQYRS9Wdm6KLSo911klN9G876LCPYM6yhm/Dda4WcUeIq67/JU\nZUYaZWbiiJOEn7uweSxrhriT3A0wWqSSqzQ3IUT5bRCoVulG9uQpU9XKkWdS2QKq\nkrPkL8+vtQKBgQCevfHJ5vH4xjq3lZglDmVbA8m+EQf6jNKZUQH+XdeEJ5RTJ5ak\n7z66lUnA3IHSV3IH7XWS2CS/iG8wEf7K1BZHau2AmE250hcnupYfWnoY0Eb4DSZo\nW9seqMwvLJHlciaPZQ4XMf6NMQTSGV65E3owMnIae9O00VCbOu1VjEzX5QKBgBde\nilfTUHB2B4DB8k4dRmqohtMb5zfW7LVyRJrzKfDs5joPAHbu/m0/t9QnZRWUe+0L\noK4GfK57bc6UaBi2sJTFcsEvaTGKawrHHJSKpKog2BgwW+raPoGcvdv1b8LmUP06\nhZWXHS6eQ99O3HFNF/lV8vmlWdiayrpVIDK//gQlAoGAHpp9+G0fojsAmwCbSudR\nl++Qj8h3ftsGMjZ9YyYZDNjRhNgXBYmo6Xza9KaQIBRWKlsbRQRrxy5pFfQBPsqN\nhqb4U0J2gjlsIJVhDUwSIUcp8dDMTit3DHbYag021e+6Y1b+WEYnZgr7fSzlPPtn\nxZwCaL0T2K9aYOweQ17kv5U=\n-----END PRIVATE KEY-----\n",
+  "client_email": "asp-net-backend@boxwood-night-449813-s9.iam.gserviceaccount.com",
+  "client_id": "114291100623594916634",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/asp-net-backend%40boxwood-night-449813-s9.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}

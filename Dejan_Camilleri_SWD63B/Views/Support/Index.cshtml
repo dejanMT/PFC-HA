@@ -1,0 +1,48 @@
+﻿@model Dejan_Camilleri_SWD63B.Models.TicketPost
+@{
+    ViewData["Title"] = "Report an Issue";
+}
+
+<div class="container mt-5">
+    <h2 class="mb-4">@ViewData["Title"]</h2>
+
+    <form asp-action="OpenTicket"
+          asp-controller="Support"
+          method="post"
+          enctype="multipart/form-data">
+
+        <div class="mb-3">
+            <label asp-for="PostTitle" class="form-label">Title</label>
+            <input asp-for="PostTitle" class="form-control" />
+            <span asp-validation-for="PostTitle" class="text-danger"></span>
+        </div>
+
+        <div class="mb-3">
+            <label asp-for="PostDescription" class="form-label">Description</label>
+            <textarea asp-for="PostDescription"
+                      class="form-control"
+                      rows="4">
+      </textarea>
+            <span asp-validation-for="PostDescription" class="text-danger"></span>
+        </div>
+
+        <div class="mb-4">
+            <label asp-for="PostImage" class="form-label">Upload Screenshot</label>
+            <input asp-for="PostImage"
+                   type="file"
+                   class="form-control"
+                   accept="image/*" />
+            <span asp-validation-for="PostImage" class="text-danger"></span>
+        </div>
+
+        <button type="submit" class="btn btn-primary">
+            Open Ticket
+        </button>
+    </form>
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
