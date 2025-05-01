@@ -1,54 +1,79 @@
 using Dejan_Camilleri_SWD63B.DataAccess;
-using Google.Cloud.Firestore.V1;
+using Dejan_Camilleri_SWD63B.Interfaces;
+using Dejan_Camilleri_SWD63B.Services;
+using Google.Cloud.Logging.V2;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authentication.Google;
+using Microsoft.Extensions.Logging;
 using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
+//Set up Google Application Credentials for ADC
 Environment.SetEnvironmentVariable(
-    "GOOGLE_APPLICATION_CREDENTIALS", 
+    "GOOGLE_APPLICATION_CREDENTIALS",
     builder.Configuration["Authentication:Google:ServiceAccountCredentials"]
 );
 
-//Added for google auth.  
-builder.Services.AddAuthentication(options =>
-{
+//Configure Cloud Logging
+builder.Configuration["GoogleCloud:ProjectId"] = builder.Configuration["Authentication:Google:ProjectId"] ?? "620707456996";
+builder.Configuration["GoogleCloud:LogName"] = builder.Configuration["GoogleCloud:LogName"] ?? "social-media-app-log";
+var loggerFactory = LoggerFactory.Create(logging => {
+    logging.AddConsole();
+    logging.AddDebug();
+});
+var cloudLoggingService = new GoogleCloudLoggingService(
+    builder.Configuration,
+    loggerFactory.CreateLogger<GoogleCloudLoggingService>(),
+    builder.Environment
+);
+builder.Services.AddSingleton<ICloudLoggingService>(cloudLoggingService);
+
+//Initialize and load secrets via Secret Manager
+var secretManager = new GoogleSecretManagerService(
+    builder.Configuration["GoogleCloud:ProjectId"]!,
+    cloudLoggingService
+);
+await secretManager.LoadSecretsIntoConfigurationAsync(builder.Configuration);
+builder.Services.AddSingleton<ISecretManagerService>(secretManager);
+
+//Configure Authentication with Google OAuth
+builder.Services.AddAuthentication(options => {
     options.DefaultScheme = CookieAuthenticationDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = GoogleDefaults.AuthenticationScheme;
-}).AddCookie()
-.AddGoogle(options =>
-{
-    IConfigurationSection googleAuth = builder.Configuration.GetSection("Authentication:Google");
-    options.ClientId = googleAuth["ClientId"];
-    options.ClientSecret = googleAuth["ClientSecret"];
+})
+.AddCookie()
+.AddGoogle(options => {
+    var googleAuth = builder.Configuration.GetSection("Authentication:Google");
+    options.ClientId = googleAuth["ClientId"]!;
+    options.ClientSecret = googleAuth["ClientSecret"]!;
     options.Scope.Add("profile");
-    options.Events.OnCreatingTicket = (context) =>
-    {
-        String email = context.User.GetProperty("email").GetString();
-        String picture = context.User.GetProperty("picture").GetString();
-        context.Identity.AddClaim(new Claim("email", email));
-        context.Identity.AddClaim(new Claim("picture", picture));
+    options.CallbackPath = "/signin-google";
+    options.Events.OnCreatingTicket = context => {
+        var email = context.User.GetProperty("email").GetString();
+        var picture = context.User.GetProperty("picture").GetString();
+        context.Identity.AddClaim(new Claim("email", email!));
+        context.Identity.AddClaim(new Claim("picture", picture!));
         return Task.CompletedTask;
     };
 });
 
+//Register application services
 builder.Services.AddScoped<FirestoreRepository>();
-//builder.Services.AddScoped<IFileUploadService, FileUploadService>();
+builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 
-// Add services to the container.  
+// Add Pub/Sub service
+builder.Services.AddSingleton<IPubSubService, PubSubService>();
+
+//Add MVC
 builder.Services.AddControllersWithViews();
 
 var app = builder.Build();
 
-builder.Logging.AddConsole();
-builder.Logging.AddDebug();
-
-// Configure the HTTP request pipeline.  
+//Configure middleware pipeline
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.  
     app.UseHsts();
 }
 
@@ -56,12 +81,12 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllerRoute(
-  name: "default",
-  pattern: "{controller=Home}/{action=Index}/{id?}");
+    name: "default",
+    pattern: "{controller=Home}/{action=Index}/{id?}"
+);
 
 app.Run();

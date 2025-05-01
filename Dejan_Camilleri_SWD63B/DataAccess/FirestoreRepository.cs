@@ -8,10 +8,20 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
         private readonly ILogger<FirestoreRepository> _logger;
         private FirestoreDb _db;
 
-        public FirestoreRepository(ILogger<FirestoreRepository> logger, IConfiguration configuration)
+        public FirestoreRepository(ILogger<FirestoreRepository> logger, IConfiguration config)
         {
             _logger = logger;
-            _db = FirestoreDb.Create(configuration.GetValue<string>("Authentication:Google:ProjectId"));
+
+            string projectId = config["Authentication:Google:ProjectId"]!;
+            string databaseId = config["Authentication:Google:DatabaseId"]!;
+
+            var fb = new FirestoreDbBuilder
+            {
+                ProjectId = projectId,
+                DatabaseId = databaseId
+            };
+
+            _db = fb.Build();
         }
 
         public async Task AddTicket(TicketPost post)

@@ -1,6 +1,7 @@
 ﻿using Dejan_Camilleri_SWD63B.Interfaces;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Storage.V1;
+using System.Xml.Linq;
 
 namespace Dejan_Camilleri_SWD63B.Services
 {
@@ -42,7 +43,8 @@ namespace Dejan_Camilleri_SWD63B.Services
                     bucket: _bucketName,
                     objectName: fileName,
                     contentType: file.ContentType,
-                    source: memoryStream);
+                    source: memoryStream
+                );
 
                 // Generate the public URL for the file
                 string publicUrl = $"https://storage.googleapis.com/{_bucketName}/{fileName}";

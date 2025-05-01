@@ -3,6 +3,12 @@
     ViewData["Title"] = "Report an Issue";
 }
 
+<style>
+    #uploadProgress {
+        transition: width 0.5s ease;
+    }
+</style>
+
 <div class="container mt-5">
     <h2 class="mb-4">@ViewData["Title"]</h2>
 
@@ -10,39 +16,110 @@
           asp-controller="Support"
           method="post"
           enctype="multipart/form-data">
+      @Html.AntiForgeryToken()
+
+      <div class="mb-3">
+        <label asp-for="PostTitle" class="form-label">Title</label>
+        <input asp-for="PostTitle" class="form-control" />
+        <span asp-validation-for="PostTitle" class="text-danger"></span>
+      </div>
+
+      <div class="mb-3">
+        <label asp-for="PostDescription" class="form-label">Description</label>
+        <textarea asp-for="PostDescription"
+                  class="form-control"
+                  rows="4"></textarea>
+        <span asp-validation-for="PostDescription" class="text-danger"></span>
+      </div>
 
         <div class="mb-3">
-            <label asp-for="PostTitle" class="form-label">Title</label>
-            <input asp-for="PostTitle" class="form-control" />
-            <span asp-validation-for="PostTitle" class="text-danger"></span>
+            <label asp-for="Priority" class="form-label">Priority</label>
+            <select asp-for="Priority" class="form-select" required>
+                <option value="" disabled selected>-- Select priority --</option>
+                <option value="High">High</option>
+                <option value="Medium">Medium</option>
+                <option value="Low">Low</option>
+            </select>
+            <span asp-validation-for="Priority" class="text-danger"></span>
         </div>
+
+      <!-- **File input must match your model’s property name exactly** -->
+      <div class="mb-3">
+        <label asp-for="TicketImage" class="form-label">Attach Screenshot</label>
+        <input asp-for="TicketImage"
+               type="file"
+               class="form-control"
+               accept="image/*" />
+        <span asp-validation-for="TicketImage" class="text-danger"></span>
+      </div>
 
         <div class="mb-3">
-            <label asp-for="PostDescription" class="form-label">Description</label>
-            <textarea asp-for="PostDescription"
-                      class="form-control"
-                      rows="4">
-      </textarea>
-            <span asp-validation-for="PostDescription" class="text-danger"></span>
+            <div class="progress">
+                <div id="uploadProgress" class="progress-bar" role="progressbar"
+                     style="width: 0%;" aria-valuemin="0" aria-valuemax="100">
+                    0%
+                </div>
+            </div>
         </div>
 
-        <div class="mb-4">
-            <label asp-for="PostImage" class="form-label">Upload Screenshot</label>
-            <input asp-for="PostImage"
-                   type="file"
-                   class="form-control"
-                   accept="image/*" />
-            <span asp-validation-for="PostImage" class="text-danger"></span>
-        </div>
-
-        <button type="submit" class="btn btn-primary">
-            Open Ticket
-        </button>
+      <button type="submit" class="btn btn-primary">Open Ticket</button>
     </form>
+
 </div>
 
 @section Scripts {
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(function() {
+          $('#ticketForm').on('submit', function(e) {
+            e.preventDefault();
+            var form = this;
+            var data = new FormData(form);
+
+            $.ajax({
+              url: $(form).attr('action'),
+              type: 'POST',
+              data: data,
+              processData: false,
+              contentType: false,
+              xhr: function() {
+                var xhr = new window.XMLHttpRequest();
+                xhr.upload.addEventListener('progress', function(evt) {
+                  if (evt.lengthComputable) {
+                    var percent = Math.round(evt.loaded / evt.total * 100);
+
+                    // animate via jQuery so it's visible even on fast uploads
+                    $('#uploadProgress').stop().animate({
+                      width: percent + '%'
+                    }, 300)  // 300ms animation
+                    .text(percent + '%');
+                  }
+                }, false);
+                return xhr;
+              },
+              success: function() {
+                // once the upload completes, make sure the bar is at 100%
+                $('#uploadProgress').stop().animate({
+                  width: '100%'
+                }, 300)
+                .text('100%');
+
+                // then wait a beat before redirecting
+                setTimeout(function() {
+                  window.location.href = '@Url.Action("List", "Support")';
+                }, 800);  // adjust delay (ms) to taste
+              },
+              error: function() {
+                alert('Upload failed');
+                $('#uploadProgress').css('width', '0%').text('0%');
+              }
+            });
+          });
+        });
+    </script>
+
 }

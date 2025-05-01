@@ -1,0 +1,27 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+@model IEnumerable<Dejan_Camilleri_SWD63B.Models.TicketPost>
+
+<h2>All Tickets</h2>
+<ul class="list-group">
+    @foreach (var t in Model)
+    {
+        <li class="list-group-item">
+            <strong>@t.PostTitle</strong><br />
+            @t.PostDescription<br />
+            <em>By @t.PostAuthorEmail on @t.PostDate</em>
+            @if (!string.IsNullOrEmpty(t.TicketImageUrl))
+            {
+                <div><img src="@t.TicketImageUrl" class="img-thumbnail mt-2" /></div>
+            }
+            else
+            {
+                <span class="text-muted">no image/s uploaded</span>
+            }
+        </li>
+    }
+</ul>

@@ -1,7 +1,7 @@
 ﻿using Google.Cloud.Logging.V2;
 using Google.Cloud.Logging.Type;
 
-namespace Dejan_Camilleri_SWD63B.Services
+namespace Dejan_Camilleri_SWD63B.Interfaces
 {
     public interface ICloudLoggingService
     {

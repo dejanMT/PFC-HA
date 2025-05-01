@@ -1,5 +1,6 @@
 ﻿using Google.Cloud.Firestore;
 using System.ComponentModel.DataAnnotations;
+using System.ComponentModel.DataAnnotations.Schema;
 
 namespace Dejan_Camilleri_SWD63B.Models
 {
@@ -10,9 +11,11 @@ namespace Dejan_Camilleri_SWD63B.Models
         [FirestoreProperty]
         public string TicketId { get; set; }
 
+        [Required]
         [FirestoreProperty]
         public string PostTitle { get; set; }
 
+        [Required]
         [FirestoreProperty]
         public string PostDescription { get; set; }
 
@@ -25,6 +28,10 @@ namespace Dejan_Camilleri_SWD63B.Models
         [FirestoreProperty]
         public DateTimeOffset PostDate { get; set; }
 
+        [Required]
+        [FirestoreProperty]
+        public string Priority { get; set; }
+
 
 
         [FirestoreProperty]
@@ -35,8 +42,9 @@ namespace Dejan_Camilleri_SWD63B.Models
 
 
 
-
-        public string PostImageUrl { get; set; }
-        public IFormFile PostImage { get; set; }
+        [FirestoreProperty]
+        public string TicketImageUrl { get; set; }
+        [NotMapped]
+        public IFormFile TicketImage { get; set; }
     }
 }
