@@ -65,6 +65,11 @@ builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 // Add Pub/Sub service
 builder.Services.AddSingleton<IPubSubService, PubSubService>();
 
+builder.Services.AddStackExchangeRedisCache(opt => {
+    opt.Configuration = builder.Configuration["Redis:ConnectionString"];
+});
+builder.Services.AddSingleton<ICacheService, RedisCacheService>();
+
 //Add MVC
 builder.Services.AddControllersWithViews();
 
@@ -90,3 +95,12 @@ app.MapControllerRoute(
 );
 
 app.Run();
+
+
+
+/*
+ ToDo:
+    - Implement roles and page authorizetions
+    - Implement ticket status updates
+    - Fix images to show in the ticket list
+ */

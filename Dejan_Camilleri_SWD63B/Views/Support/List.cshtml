@@ -1,27 +1,76 @@
-﻿@*
-    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
-*@
+﻿@model IEnumerable<Dejan_Camilleri_SWD63B.Models.TicketPost>
+
 @{
+    ViewData["Title"] = "All Tickets";
+    var selected = ViewData["SelectedPriority"] as string ?? "";
+    var priorities = new[] { "High", "Medium", "Low" };
 }
 
-@model IEnumerable<Dejan_Camilleri_SWD63B.Models.TicketPost>
-
 <h2>All Tickets</h2>
-<ul class="list-group">
+
+<form method="get" asp-action="List" asp-controller="Support" class="row g-2 align-items-center mb-3">
+  <div class="col-auto">
+    <label for="priority" class="col-form-label">Filter by Priority:</label>
+  </div>
+  <div class="col-auto">
+    <select id="priority" name="priority" class="form-select">
+      <option value="">All</option>
+      @foreach (var pr in priorities)
+      {
+           var selAttr = pr == selected ? " selected" : "";
+          @:<option value="@pr"@selAttr>@pr</option>
+      }
+    </select>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-secondary">Filter</button>
+  </div>
+</form>
+
+<table class="table table-striped">
+  <thead>
+    <tr>
+      <th>Title</th>
+      <th>Description</th>
+      <th>Priority</th>
+      <th>Screenshots</th>
+      <th>Date</th>
+      <th>Author</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
     @foreach (var t in Model)
     {
-        <li class="list-group-item">
-            <strong>@t.PostTitle</strong><br />
-            @t.PostDescription<br />
-            <em>By @t.PostAuthorEmail on @t.PostDate</em>
-            @if (!string.IsNullOrEmpty(t.TicketImageUrl))
-            {
-                <div><img src="@t.TicketImageUrl" class="img-thumbnail mt-2" /></div>
-            }
-            else
-            {
-                <span class="text-muted">no image/s uploaded</span>
-            }
-        </li>
+      <tr>
+        <td>@t.PostTitle</td>
+        <td>@t.PostDescription</td>
+        <td>@t.Priority</td>
+        <td>
+          @if (t.TicketImageUrls?.Any() == true)
+          {
+            <div class="d-flex flex-wrap gap-2">
+              @foreach (var url in t.TicketImageUrls)
+              {
+                <img src="@url"
+                     alt="screenshot"
+                     class="img-thumbnail"
+                     style="max-width:100px;max-height:100px" />
+              }
+            </div>
+          }
+          else
+          {
+            <span class="text-muted">No images</span>
+          }
+        </td>
+        <td>@t.PostDate.ToLocalTime().ToString("g")</td>
+        <td>@t.PostAuthorEmail</td>
+        <td>
+            <!-- Add buttons: Take Ticket (which will populate the SupportAgent) and Close Ticket (which will update ClosedTicket to true). 
+            These buttons do not show together, the close ticket button should shown after the technician clicked on take ticket button-->
+        </td>
+      </tr>
     }
-</ul>
+  </tbody>
+</table>

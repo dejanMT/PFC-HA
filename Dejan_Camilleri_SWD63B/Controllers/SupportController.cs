@@ -13,12 +13,14 @@ namespace Dejan_Camilleri_SWD63B.Controllers
         private FirestoreRepository _repo;
         private readonly IFileUploadService _uploader;
         private readonly IPubSubService _pubsub;
+        private readonly ICacheService _cache;
 
-        public SupportController(FirestoreRepository repo, IFileUploadService uploader, IPubSubService pubsub)
+        public SupportController(FirestoreRepository repo, IFileUploadService uploader, IPubSubService pubsub, ICacheService cache)
         {
             _repo = repo;
             _uploader = uploader;
             _pubsub = pubsub;
+            _cache = cache;
         }
 
         public IActionResult Index()
@@ -26,23 +28,23 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             return View();
         }
 
+        [HttpPost, Route("Support/UploadImage")]
+        public async Task<IActionResult> UploadImage(IFormFile file)
+        {
+            var url = await _uploader.UploadFileAsync(file, null);
+
+            return Ok(new { imageUrl = url });
+        }
+
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> OpenTicket(TicketPost ticket)
         {
-
             ticket.TicketId = Guid.NewGuid().ToString();
             ticket.PostDate = DateTimeOffset.UtcNow;
             ticket.PostAuthor = User.Identity.Name;
-            ticket.Priority = ticket.Priority;
             ticket.PostAuthorEmail = User.FindFirst(ClaimTypes.Email)?.Value;
 
-            if (ticket. TicketImage != null && ticket.TicketImage.Length > 0)
-            {
-                ticket.TicketImageUrl = await _uploader.UploadFileAsync(ticket.TicketImage, null);
-            }
-
-            //PUB/SUB topic 
             var payload = new
             {
                 ticket.TicketId,
@@ -51,28 +53,53 @@ namespace Dejan_Camilleri_SWD63B.Controllers
                 ticket.PostAuthorEmail,
                 ticket.Priority,
                 ticket.PostDate,
-                ticket.TicketImageUrl,
+                ticket.TicketImageUrls,
                 Status = "Queued"
             };
 
-            // publish to Pub/Sub
             await _pubsub.PublishTicketAsync(payload, ticket.Priority);
 
-            // save to Firestore
             await _repo.AddTicket(ticket);
 
-            return Ok(new
-            {
-                redirectUrl = Url.Action("List", "Support")
-            });
+            return RedirectToAction("List", "Support");
         }
 
-        [HttpGet]
-        public async Task<IActionResult> List()
+
+        [HttpGet("List")]
+        public async Task<IActionResult> List(string priority = "")
         {
-            var tickets = await _repo.GetTickets();
+
+            //get tickets from cache
+            var tickets = await _cache.GetTicketsAsync();
+
+            //if cache is empty, load from Firestore
+            if (tickets == null || !tickets.Any())
+            {
+                tickets = await _repo.GetTickets();
+                await _cache.SetTicketsAsync(tickets); //populate cache
+            }
+
+            //filter tickets by priority
+            if (!string.IsNullOrEmpty(priority))
+            {
+                tickets = tickets
+                    .Where(t => t.Priority.Equals(priority, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+            else
+            {
+                tickets = tickets
+                    .OrderBy(t => t.Priority == "High" ? 0
+                               : t.Priority == "Medium" ? 1
+                               : 2)
+                    .ToList();
+            }
+
+            ViewData["SelectedPriority"] = priority;
             return View(tickets);
         }
+
+
 
 
     }

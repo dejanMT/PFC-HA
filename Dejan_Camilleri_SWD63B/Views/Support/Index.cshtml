@@ -12,7 +12,8 @@
 <div class="container mt-5">
     <h2 class="mb-4">@ViewData["Title"]</h2>
 
-    <form asp-action="OpenTicket"
+    <form id="ticketForm"
+          asp-action="OpenTicket"
           asp-controller="Support"
           method="post"
           enctype="multipart/form-data">
@@ -44,82 +45,113 @@
         </div>
 
       <!-- **File input must match your model’s property name exactly** -->
-      <div class="mb-3">
-        <label asp-for="TicketImage" class="form-label">Attach Screenshot</label>
-        <input asp-for="TicketImage"
-               type="file"
-               class="form-control"
-               accept="image/*" />
-        <span asp-validation-for="TicketImage" class="text-danger"></span>
-      </div>
+        <div class="mb-3">
+            <label for="files">Select images</label>
+            <input type="file" id="files" multiple class="form-control" accept="image/*" />
+        </div>
 
         <div class="mb-3">
-            <div class="progress">
-                <div id="uploadProgress" class="progress-bar" role="progressbar"
-                     style="width: 0%;" aria-valuemin="0" aria-valuemax="100">
-                    0%
-                </div>
-            </div>
+            <div id="uploadList"></div>
         </div>
+
+        <div id="hiddenUrls"></div>
 
       <button type="submit" class="btn btn-primary">Open Ticket</button>
     </form>
 
 </div>
 
+
 @section Scripts {
+
     @{
         await Html.RenderPartialAsync("_ValidationScriptsPartial");
     }
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        .progress-bar {
+            transition: width 0.3s ease;
+        }
+    </style>
     <script>
-        $(function() {
-          $('#ticketForm').on('submit', function(e) {
-            e.preventDefault();
-            var form = this;
-            var data = new FormData(form);
+        $(function(){
+          let files, uploadedCount = 0;
+
+          $('#files').on('change', function(){
+            files = this.files;
+            uploadedCount = 0;
+            $('#uploadList').empty();
+            $('#hiddenUrls').empty();
+            $('#submitBtn').prop('disabled', true);
+
+            // build UI placeholders
+            $.each(files, function(i, file){
+              $('#uploadList').append(`
+                <div class="mb-2">
+                  <strong>${file.name}</strong>
+                  <div class="progress">
+                    <div class="progress-bar" role="progressbar"
+                         style="width:0%" aria-valuemin="0" aria-valuemax="100">0%</div>
+                  </div>
+                </div>`);
+            });
+
+            // start uploading the first file
+            uploadOne(0);
+          });
+
+          function uploadOne(index){
+            if (index >= files.length){
+              // all done → enable final submit
+              $('#submitBtn').prop('disabled', false);
+              return;
+            }
+            const file = files[index];
+            const progressBar = $('#uploadList .progress-bar').eq(index);
+            const fd = new FormData();
+            fd.append('file', file);
 
             $.ajax({
-              url: $(form).attr('action'),
+              url: '/Support/UploadImage',
               type: 'POST',
-              data: data,
+              data: fd,
               processData: false,
               contentType: false,
-              xhr: function() {
-                var xhr = new window.XMLHttpRequest();
-                xhr.upload.addEventListener('progress', function(evt) {
-                  if (evt.lengthComputable) {
-                    var percent = Math.round(evt.loaded / evt.total * 100);
-
-                    // animate via jQuery so it's visible even on fast uploads
-                    $('#uploadProgress').stop().animate({
-                      width: percent + '%'
-                    }, 300)  // 300ms animation
-                    .text(percent + '%');
+              xhr: function(){
+                const xhr = new XMLHttpRequest();
+                xhr.upload.addEventListener('progress', function(evt){
+                  if (evt.lengthComputable){
+                    const pct = Math.round(evt.loaded/evt.total*100);
+                    progressBar.css('width', pct + '%').text(pct + '%');
                   }
-                }, false);
+                });
                 return xhr;
               },
-              success: function() {
-                // once the upload completes, make sure the bar is at 100%
-                $('#uploadProgress').stop().animate({
-                  width: '100%'
-                }, 300)
-                .text('100%');
-
-                // then wait a beat before redirecting
-                setTimeout(function() {
-                  window.location.href = '@Url.Action("List", "Support")';
-                }, 800);  // adjust delay (ms) to taste
+              success: function(res){
+                // mark 100%
+                progressBar.css('width','100%').text('100%');
+                // inject a hidden input per URL
+                $('#hiddenUrls').append(
+                  `<input type="hidden" name="TicketImageUrls" value="${res.imageUrl}" />`
+                );
+                // next file
+                uploadOne(index + 1);
               },
-              error: function() {
-                alert('Upload failed');
-                $('#uploadProgress').css('width', '0%').text('0%');
+              error: function(){
+                alert('Upload failed: ' + file.name);
+                uploadOne(index + 1);
               }
             });
-          });
+          }
         });
     </script>
 
+
+
+
+
 }
+
