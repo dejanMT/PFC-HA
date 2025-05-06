@@ -41,9 +41,17 @@ namespace Dejan_Camilleri_SWD63B.Controllers
         public async Task<IActionResult> OpenTicket(TicketPost ticket)
         {
             ticket.TicketId = Guid.NewGuid().ToString();
-            ticket.PostDate = DateTimeOffset.UtcNow;
+            ticket.OpenDate = DateTimeOffset.UtcNow;
             ticket.PostAuthor = User.Identity.Name;
             ticket.PostAuthorEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+
+            if (ticket.TicketImage != null && ticket.TicketImage.Length > 0)
+            {
+                // Give each file a unique name or put it in a folder per ticket
+                var fileName = $"{ticket.TicketId}/{ticket.TicketImage.FileName}";
+                var url = await _uploader.UploadFileAsync(ticket.TicketImage, fileName);
+                ticket.TicketImageUrls.Add(url);
+            }
 
             var payload = new
             {
@@ -52,7 +60,7 @@ namespace Dejan_Camilleri_SWD63B.Controllers
                 ticket.PostDescription,
                 ticket.PostAuthorEmail,
                 ticket.Priority,
-                ticket.PostDate,
+                ticket.OpenDate,
                 ticket.TicketImageUrls,
                 Status = "Queued"
             };
@@ -73,11 +81,11 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             var tickets = await _cache.GetTicketsAsync();
 
             //if cache is empty, load from Firestore
-            if (tickets == null || !tickets.Any())
-            {
+            //if (tickets == null || !tickets.Any())
+            //{
                 tickets = await _repo.GetTickets();
-                await _cache.SetTicketsAsync(tickets); //populate cache
-            }
+                await _cache.SetTicketsAsync(tickets); //populate the cache
+            //}
 
             //filter tickets by priority
             if (!string.IsNullOrEmpty(priority))
@@ -97,6 +105,109 @@ namespace Dejan_Camilleri_SWD63B.Controllers
 
             ViewData["SelectedPriority"] = priority;
             return View(tickets);
+        }
+
+        [HttpPost("TakeTicket/{ticketId}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> TakeTicket(string ticketId)
+        {
+            var tech = User.FindFirst(ClaimTypes.Email)?.Value;
+            await _repo.UpdateTicketAsync(ticketId, supportAgent: tech);
+
+            // update cache so UI shows the change immediately
+            var tickets = await _cache.GetTicketsAsync();
+            var t = tickets.FirstOrDefault(x => x.TicketId == ticketId);
+            if (t != null)
+            {
+                t.SupportAgent = tech;
+                t.CloseDate = DateTimeOffset.UtcNow;
+                await _cache.SetTicketsAsync(tickets);
+            }
+
+            return RedirectToAction("List");
+        }
+
+        [HttpPost("MyTickets/{ticketId}")]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CloseTicket(string ticketId)
+        {
+            await _repo.UpdateTicketAsync(ticketId, closed: true);
+
+            // update cache
+            var tickets = await _cache.GetTicketsAsync();
+            var t = tickets.FirstOrDefault(x => x.TicketId == ticketId);
+            if (t != null)
+            {
+                t.ClosedTicket = true;
+                await _cache.SetTicketsAsync(tickets);
+            }
+
+            return RedirectToAction("List");
+        }
+
+
+        /// <summary>
+        /// This action is for the support agent and user to view their own tickets.
+        /// </summary>
+        /// <returns></returns>
+        [HttpGet]
+        public async Task<IActionResult> MyTickets()
+        {
+            // grab the current user’s email from their Google claim
+            var currentEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+
+            // load *all* tickets, then filter in-memory:
+            var all = await _repo.GetTickets();
+            var closed = all
+                .Where(t => t.ClosedTicket)                                   
+                .Where(t =>
+                    t.PostAuthorEmail == currentEmail                         
+                    || t.SupportAgent == currentEmail)                      
+                .ToList();
+
+            return View(closed);
+        }
+
+
+        /// <summary>
+        /// This will show the details of a ticket.
+        /// </summary>
+        /// <param name="ticketId"></param>
+        /// <returns></returns>
+        //[HttpGet]
+        //public async Task<IActionResult> Details(string ticketId)
+        //{
+        //    if (string.IsNullOrEmpty(ticketId)) return BadRequest();
+
+        //    var ticket = await _repo.GetTicketByIdAsync(ticketId);
+        //    if (ticket == null) return NotFound();
+
+        //    return View(ticket);
+        //}
+
+        [HttpGet]
+        public async Task<IActionResult> Details(string ticketId)
+        {
+            if (string.IsNullOrEmpty(ticketId)) return BadRequest();
+            var ticket = await _repo.GetTicketByIdAsync(ticketId);
+            if (ticket == null) return NotFound();
+
+            var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+            var isOpener = ticket.PostAuthorEmail == userEmail;
+            var isTech = User.IsInRole("ITSupport"); // or however you detect IT
+
+            if (!isOpener && !isTech)
+                return Forbid();
+
+            // list & sign each blob under folder "tickets/{ticketId}/"
+            ticket.TicketImageUrls = new List<string>();
+            foreach (var obj in await _uploader.ListObjectsAsync($"{ticketId}/"))
+            {
+                var signed = await _uploader.GetSignedUrlAsync(obj.Name, TimeSpan.FromMinutes(15));
+                ticket.TicketImageUrls.Add(signed);
+            }
+
+            return View(ticket);
         }
 
 

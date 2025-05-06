@@ -1,0 +1,99 @@
+﻿@using System.Security.Claims
+@model Dejan_Camilleri_SWD63B.Models.TicketPost
+
+@{
+    ViewData["Title"] = "Ticket Details";
+    var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+}
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h3>@Model.PostTitle</h3>
+        <small class="text-muted">
+            @Model.OpenDate.ToLocalTime() by @Model.PostAuthorEmail
+        </small>
+    </div>
+    <div class="card-body">
+        <dl class="row">
+            <dt class="col-sm-3">Description</dt>
+            <dd class="col-sm-9">@Model.PostDescription</dd>
+
+            <dt class="col-sm-3">Priority</dt>
+            <dd class="col-sm-9">
+                <span class="badge
+                     @(Model.Priority=="High"? "bg-danger"
+                       : Model.Priority=="Medium"? "bg-warning"
+                       : "bg-secondary")">
+                    @Model.Priority
+                </span>
+            </dd>
+
+            <dt class="col-sm-3">Support Agent</dt>
+            <dd class="col-sm-9">
+                @(string.IsNullOrEmpty(Model.SupportAgent)
+                    ? "Unassigned"
+                    : Model.SupportAgent)
+            </dd>
+
+            <dt class="col-sm-3">Closed?</dt>
+            <dd class="col-sm-9">
+                @if (Model.ClosedTicket)
+                {
+                    <span class="text-success">Yes</span>
+                    <br />
+                    <small>Closed on @Model.CloseDate?.ToLocalTime():g</small>
+                }
+                else
+                {
+                    <span class="text-danger">No</span>
+                }
+            </dd>
+
+            <dt class="col-sm-3">Screenshots</dt>
+            <dd class="col-sm-9">
+                @if (Model.TicketImageUrls?.Any() == true)
+                {
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var url in Model.TicketImageUrls)
+                        {
+                            <img src="@url" class="img-thumbnail" style="max-width:150px;" />
+                        }
+                    </div>
+                }
+                else
+                {
+                    <span class="text-muted">None</span>
+                }
+            </dd>
+        </dl>
+
+        <div class="mt-4">
+            @* Only show “Take” if nobody has yet *@
+            @if (string.IsNullOrEmpty(Model.SupportAgent))
+            {
+                <form asp-action="TakeTicket"
+                      asp-route-ticketId="@Model.TicketId"
+                      method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-primary">
+                        Take Ticket
+                    </button>
+                </form>
+            }
+            @* Show “Close” only to the assigned agent when it’s still open *@
+            else if (Model.SupportAgent == userEmail && !Model.ClosedTicket)
+            {
+                <form asp-action="CloseTicket"
+                      asp-route-ticketId="@Model.TicketId"
+                      method="post" class="d-inline">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        Close Ticket
+                    </button>
+                </form>
+            }
+        </div>
+    </div>
+</div>
+
+<a asp-action="List" class="btn btn-link">← Back to All Tickets</a>

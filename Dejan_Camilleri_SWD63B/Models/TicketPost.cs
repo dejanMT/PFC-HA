@@ -26,7 +26,10 @@ namespace Dejan_Camilleri_SWD63B.Models
         public string PostAuthorEmail { get; set; }
 
         [FirestoreProperty]
-        public DateTimeOffset PostDate { get; set; }
+        public DateTimeOffset OpenDate { get; set; }
+
+        [FirestoreProperty]
+        public DateTimeOffset? CloseDate { get; set; }
 
         [Required]
         [FirestoreProperty]

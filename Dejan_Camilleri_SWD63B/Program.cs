@@ -101,6 +101,26 @@ app.Run();
 /*
  ToDo:
     - Implement roles and page authorizetions
-    - Implement ticket status updates
     - Fix images to show in the ticket list
+
+
+- images stored in a bucket allows only a selection of email addresses/users to access them (User who opened the 	ticket and all it)
+- User permissions/roles
+
+
+- SE4.6:d) Also it should send an email (tip: Use MailGun) to the technicians about this ticket; [2]
+	Sending email will also be assessed in KU3.1.
+	e) Log into Google Cloud Logging any emails sent while using the 
+
+
+
+
+
+
+
+- CHECK IF DONE: Two Authorization attributes must be applied and working: one on the Users’ controller and
+		one on the Technicians’ Controller to allow the respective roles in [1]
+
+
+
  */

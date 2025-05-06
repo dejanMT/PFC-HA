@@ -16,8 +16,8 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             // keep only open OR less than 7 days old
             var view = all
               .Where(t => !t.ClosedTicket
-                       || (DateTimeOffset.UtcNow - t.PostDate) <= TimeSpan.FromDays(7))
-              .OrderBy(t => t.PostDate)
+                       || (DateTimeOffset.UtcNow - t.OpenDate) <= TimeSpan.FromDays(7))
+              .OrderBy(t => t.OpenDate)
               .ToList();
 
             return View(view);

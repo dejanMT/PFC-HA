@@ -2,11 +2,52 @@
 
 @{
     ViewData["Title"] = "All Tickets";
+
+
+    var pendingCount = Model.Count(t => string.IsNullOrEmpty(t.SupportAgent));
+    var inProgressCount = Model.Count(t => 
+        !string.IsNullOrEmpty(t.SupportAgent) 
+        && !t.ClosedTicket
+    );
+    var closedCount     = Model.Count(t => t.ClosedTicket);
+
     var selected = ViewData["SelectedPriority"] as string ?? "";
     var priorities = new[] { "High", "Medium", "Low" };
 }
 
 <h2>All Tickets</h2>
+
+<div class="row mb-4">
+  <div class="col-md-4">
+    <div class="card text-white bg-secondary h-100">
+      <div class="card-body d-flex flex-column justify-content-center align-items-center">
+        <h5 class="card-title">Pending Tickets</h5>
+        <p class="card-text display-1 fw-bold">@pendingCount</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card text-white bg-primary h-100">
+      <div class="card-body d-flex flex-column justify-content-center align-items-center">
+        <h5 class="card-title">In Progress Tickets</h5>
+        <p class="card-text display-1 fw-bold">@inProgressCount</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-md-4">
+    <div class="card text-white bg-success h-100">
+      <div class="card-body d-flex flex-column justify-content-center align-items-center">
+        <h5 class="card-title">Closed Tickets</h5>
+        <p class="card-text display-1 fw-bold">@closedCount</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
 
 <form method="get" asp-action="List" asp-controller="Support" class="row g-2 align-items-center mb-3">
   <div class="col-auto">
@@ -31,9 +72,8 @@
   <thead>
     <tr>
       <th>Title</th>
-      <th>Description</th>
       <th>Priority</th>
-      <th>Screenshots</th>
+      <th>Status</th>
       <th>Date</th>
       <th>Author</th>
       <th>Actions</th>
@@ -44,32 +84,35 @@
     {
       <tr>
         <td>@t.PostTitle</td>
-        <td>@t.PostDescription</td>
         <td>@t.Priority</td>
         <td>
-          @if (t.TicketImageUrls?.Any() == true)
-          {
-            <div class="d-flex flex-wrap gap-2">
-              @foreach (var url in t.TicketImageUrls)
-              {
-                <img src="@url"
-                     alt="screenshot"
-                     class="img-thumbnail"
-                     style="max-width:100px;max-height:100px" />
-              }
-            </div>
-          }
-          else
-          {
-            <span class="text-muted">No images</span>
-          }
+            @if (t.SupportAgent == null){
+                <span class="badge bg-secondary">Unassigned</span>
+            }
+            else if (t.ClosedTicket)
+            {
+                <span class="badge bg-success">Closed</span>
+            }
+            else
+            {
+                <span class="badge bg-primary">In Progress</span>
+            }
         </td>
-        <td>@t.PostDate.ToLocalTime().ToString("g")</td>
+        <td>@t.OpenDate.ToLocalTime().ToString("g")</td>
         <td>@t.PostAuthorEmail</td>
         <td>
-            <!-- Add buttons: Take Ticket (which will populate the SupportAgent) and Close Ticket (which will update ClosedTicket to true). 
-            These buttons do not show together, the close ticket button should shown after the technician clicked on take ticket button-->
+          <a asp-controller="Support"
+             asp-action="Details"
+             asp-route-ticketId="@t.TicketId"
+             class="btn btn-sm btn-primary">
+            Details
+          </a>
         </td>
+
+
+
+
+
       </tr>
     }
   </tbody>

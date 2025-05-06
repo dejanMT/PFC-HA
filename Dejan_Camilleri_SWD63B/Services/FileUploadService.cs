@@ -10,6 +10,7 @@ namespace Dejan_Camilleri_SWD63B.Services
         private readonly ICloudLoggingService _logger;
         private readonly StorageClient _storageClient;
         private readonly string _bucketName;
+        private readonly UrlSigner _signer;
 
         public FileUploadService(ICloudLoggingService logger, IConfiguration configuration)
         {
@@ -17,6 +18,9 @@ namespace Dejan_Camilleri_SWD63B.Services
             _bucketName = configuration["Authentication:Google:BucketName"];
             GoogleCredential credentials = GoogleCredential.FromFile(configuration["Authentication:Google:ServiceAccountCredentials"]);
             _storageClient = StorageClient.Create(credentials);
+
+            var keyPath = configuration["Authentication:Google:ServiceAccountCredentials"];
+            _signer = UrlSigner.FromServiceAccountPath(keyPath);
         }
 
         public async Task<string> UploadFileAsync(IFormFile file, string fileName)
@@ -91,5 +95,18 @@ namespace Dejan_Camilleri_SWD63B.Services
                 await _logger.LogErrorAsync("Unexpected error while deleting post image", ex);
             }
         }
+
+
+        public async Task<IEnumerable<Google.Apis.Storage.v1.Data.Object>> ListObjectsAsync(string prefix)
+        {
+            return _storageClient.ListObjects(_bucketName, prefix);
+        }
+
+        public async Task<string> GetSignedUrlAsync(string objectName, TimeSpan validFor)
+        {
+            return await _signer.SignAsync(_bucketName, objectName, validFor, HttpMethod.Get);
+        }
+
+
     }
 }
