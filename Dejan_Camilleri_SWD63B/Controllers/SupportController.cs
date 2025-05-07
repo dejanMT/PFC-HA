@@ -45,13 +45,6 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             ticket.PostAuthor = User.Identity.Name;
             ticket.PostAuthorEmail = User.FindFirst(ClaimTypes.Email)?.Value;
 
-            //ticket.TicketImageUrls = new List<string>();
-            //foreach (var obj in await _uploader.ListObjectsAsync($"{ticket.TicketId}/"))
-            //{
-            //    var signed = await _uploader.GetSignedUrlAsync(obj.Name, TimeSpan.FromMinutes(15));
-            //    ticket.TicketImageUrls.Add(signed);
-            //}
-
 
             var payload = new
             {
@@ -199,11 +192,9 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             var ticket = await _repo.GetTicketByIdAsync(ticketId);
             if (ticket == null) return NotFound();
 
-            // ← NEW: enumerate all blobs under this ticket’s folder
-            //ticket.TicketImageUrls = new List<string>();
+            ticket.TicketImageUrls = new List<string>();
             foreach (var obj in await _uploader.ListObjectsAsync($"{ticketId}/"))
             {
-                // generate a V4‐signed GET URL valid for 15 minutes
                 var signedUrl = await _uploader.GetSignedUrlAsync(obj.Name, TimeSpan.FromMinutes(15));
                 ticket.TicketImageUrls.Add(signedUrl);
             }
