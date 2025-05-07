@@ -48,7 +48,10 @@ namespace Dejan_Camilleri_SWD63B.Models
         [FirestoreProperty("TicketImageUrls")]
         public List<string> TicketImageUrls { get; set; } = new List<string>();
 
-        [NotMapped]
-        public IFormFile TicketImage { get; set; }
+        //[NotMapped]
+        //public IFormFile TicketImage { get; set; }
+
+        [NotMapped] 
+        public List<IFormFile> TicketImages { get; set; } = new();
     }
 }

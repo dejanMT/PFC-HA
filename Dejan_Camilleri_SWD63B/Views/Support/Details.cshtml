@@ -35,13 +35,16 @@
                     : Model.SupportAgent)
             </dd>
 
-            <dt class="col-sm-3">Closed?</dt>
+            <dt class="col-sm-3">Status</dt>
             <dd class="col-sm-9">
-                @if (Model.ClosedTicket)
+                @if (Model.ClosedTicket && Model.SupportAgent == null)
                 {
-                    <span class="text-success">Yes</span>
+                    <span class="text-success">Closed</span>
                     <br />
                     <small>Closed on @Model.CloseDate?.ToLocalTime():g</small>
+                }
+                else if (!Model.ClosedTicket && Model.SupportAgent != null){
+                    <span class="text-warning">In Progress</span>
                 }
                 else
                 {
@@ -53,16 +56,19 @@
             <dd class="col-sm-9">
                 @if (Model.TicketImageUrls?.Any() == true)
                 {
-                    <div class="d-flex flex-wrap gap-2">
+                    <div class="d-flex flex-wrap">
                         @foreach (var url in Model.TicketImageUrls)
                         {
-                            <img src="@url" class="img-thumbnail" style="max-width:150px;" />
+                            <img src="@url"
+                                 class="img-thumbnail m-1"
+                                 style="max-width:200px"
+                                 alt="Ticket screenshot" />
                         }
                     </div>
                 }
                 else
                 {
-                    <span class="text-muted">None</span>
+                    <p>No screenshots attached.</p>
                 }
             </dd>
         </dl>

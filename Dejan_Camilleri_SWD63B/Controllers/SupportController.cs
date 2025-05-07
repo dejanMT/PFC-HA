@@ -45,13 +45,13 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             ticket.PostAuthor = User.Identity.Name;
             ticket.PostAuthorEmail = User.FindFirst(ClaimTypes.Email)?.Value;
 
-            if (ticket.TicketImage != null && ticket.TicketImage.Length > 0)
-            {
-                // Give each file a unique name or put it in a folder per ticket
-                var fileName = $"{ticket.TicketId}/{ticket.TicketImage.FileName}";
-                var url = await _uploader.UploadFileAsync(ticket.TicketImage, fileName);
-                ticket.TicketImageUrls.Add(url);
-            }
+            //ticket.TicketImageUrls = new List<string>();
+            //foreach (var obj in await _uploader.ListObjectsAsync($"{ticket.TicketId}/"))
+            //{
+            //    var signed = await _uploader.GetSignedUrlAsync(obj.Name, TimeSpan.FromMinutes(15));
+            //    ticket.TicketImageUrls.Add(signed);
+            //}
+
 
             var payload = new
             {
@@ -81,11 +81,11 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             var tickets = await _cache.GetTicketsAsync();
 
             //if cache is empty, load from Firestore
-            //if (tickets == null || !tickets.Any())
-            //{
+            if (tickets == null || !tickets.Any())
+            {
                 tickets = await _repo.GetTickets();
                 await _cache.SetTicketsAsync(tickets); //populate the cache
-            //}
+            }
 
             //filter tickets by priority
             if (!string.IsNullOrEmpty(priority))
@@ -182,6 +182,12 @@ namespace Dejan_Camilleri_SWD63B.Controllers
         //    var ticket = await _repo.GetTicketByIdAsync(ticketId);
         //    if (ticket == null) return NotFound();
 
+        //    foreach (var obj in await _uploader.ListObjectsAsync($"{ticketId}/"))
+        //    {
+        //        var signed = await _uploader.GetSignedUrlAsync(obj.Name, TimeSpan.FromMinutes(15));
+        //        ticket.TicketImageUrls.Add(signed);
+        //    }
+
         //    return View(ticket);
         //}
 
@@ -189,26 +195,22 @@ namespace Dejan_Camilleri_SWD63B.Controllers
         public async Task<IActionResult> Details(string ticketId)
         {
             if (string.IsNullOrEmpty(ticketId)) return BadRequest();
+
             var ticket = await _repo.GetTicketByIdAsync(ticketId);
             if (ticket == null) return NotFound();
 
-            var userEmail = User.FindFirst(ClaimTypes.Email)?.Value;
-            var isOpener = ticket.PostAuthorEmail == userEmail;
-            var isTech = User.IsInRole("ITSupport"); // or however you detect IT
-
-            if (!isOpener && !isTech)
-                return Forbid();
-
-            // list & sign each blob under folder "tickets/{ticketId}/"
-            ticket.TicketImageUrls = new List<string>();
+            // ← NEW: enumerate all blobs under this ticket’s folder
+            //ticket.TicketImageUrls = new List<string>();
             foreach (var obj in await _uploader.ListObjectsAsync($"{ticketId}/"))
             {
-                var signed = await _uploader.GetSignedUrlAsync(obj.Name, TimeSpan.FromMinutes(15));
-                ticket.TicketImageUrls.Add(signed);
+                // generate a V4‐signed GET URL valid for 15 minutes
+                var signedUrl = await _uploader.GetSignedUrlAsync(obj.Name, TimeSpan.FromMinutes(15));
+                ticket.TicketImageUrls.Add(signedUrl);
             }
 
             return View(ticket);
         }
+
 
 
 
