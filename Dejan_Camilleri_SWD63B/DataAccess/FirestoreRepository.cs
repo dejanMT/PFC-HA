@@ -23,25 +23,25 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
             {
                 ProjectId = projectId,
                 DatabaseId = databaseId
-                
+
             };
 
             _db = fb.Build();
             _cache = cache;
         }
 
-        //public async Task AddTicket(TicketPost post)
-        //{
-        //    await _db.Collection("posts").AddAsync(post);
-        //    _logger.LogInformation($"Post {post.TicketId} added to Firestore");
-        //}
 
         public async Task AddTicket(TicketPost post)
         {
-            var docRef = _db.Collection("posts").Document(post.TicketId);
+            // use the GUID in post.TicketId as the document ID
+            var docRef = _db
+                .Collection("posts")
+                .Document(post.TicketId);
+
             await docRef.SetAsync(post);
-            _logger.LogInformation($"Post {post.TicketId} added to Firestore (as document ID)");
+            _logger.LogInformation($"Post {post.TicketId} added to Firestore as document ID");
         }
+
 
 
         public async Task<List<TicketPost>> GetTickets()
@@ -59,7 +59,7 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
 
         }
 
-        public async Task UpdateTicketAsync( string ticketId, string supportAgent = null, bool? closed = null)
+        public async Task UpdateTicketAsync(string ticketId, string supportAgent = null, bool? closed = null)
         {
             var docRef = _db.Collection("posts").Document(ticketId);
             var updates = new Dictionary<string, object>();
@@ -74,46 +74,12 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
             }
         }
 
-        //internal async Task<TicketPost?> GetTicketByIdAsync(string ticketId)
-        //{
-        //    // 1) Try the cache first
-        //    var cacheKey = $"Ticket:{ticketId}";
-        //    var cachedJson = await _cache.GetStringAsync(cacheKey);
-        //    if (!string.IsNullOrEmpty(cachedJson))
-        //    {
-        //        // deserialize and return
-        //        var cachedTicket = JsonSerializer.Deserialize<TicketPost>(cachedJson);
-        //        return cachedTicket;
-        //    }
-
-        //    // 2) Cache-miss → hit Firestore
-        //    var doc = await _db
-        //        .Collection("tickets")
-        //        .Document(ticketId)
-        //        .GetSnapshotAsync();
-
-        //    if (!doc.Exists)
-        //        return null;
-
-        //    var ticket = doc.ConvertTo<TicketPost>();
-        //    ticket.TicketId = doc.Id;
-
-        //    // 3) Store in Redis for future requests (e.g. 7-day sliding/window)
-        //    var json = JsonSerializer.Serialize(ticket);
-        //    var opts = new DistributedCacheEntryOptions
-        //    {
-        //        AbsoluteExpirationRelativeToNow = TimeSpan.FromDays(7)
-        //    };
-        //    await _cache.SetStringAsync(cacheKey, json, opts);
-
-        //    return ticket;
-        //}
 
         internal async Task<TicketPost?> GetTicketByIdAsync(string ticketId)
         {
             // cache-first omitted for clarity…
             var doc = await _db
-                .Collection("posts")   // match your Firestore UI!
+                .Collection("posts")  
                 .Document(ticketId)
                 .GetSnapshotAsync();
 

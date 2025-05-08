@@ -37,18 +37,17 @@
 
             <dt class="col-sm-3">Status</dt>
             <dd class="col-sm-9">
-                @if (Model.ClosedTicket && Model.SupportAgent == null)
+                @if (Model.SupportAgent == null)
                 {
-                    <span class="text-success">Closed</span>
-                    <br />
-                    <small>Closed on @Model.CloseDate?.ToLocalTime():g</small>
+                    <span class="badge bg-secondary">Unassigned</span>
                 }
-                else if (!Model.ClosedTicket && Model.SupportAgent != null){
-                    <span class="text-warning">In Progress</span>
+                else if (Model.ClosedTicket)
+                {
+                    <span class="badge bg-success">Closed</span>
                 }
                 else
                 {
-                    <span class="text-danger">No</span>
+                    <span class="badge bg-primary">In Progress</span>
                 }
             </dd>
 

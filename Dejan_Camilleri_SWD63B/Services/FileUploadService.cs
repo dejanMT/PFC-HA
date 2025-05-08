@@ -33,7 +33,8 @@ namespace Dejan_Camilleri_SWD63B.Services
                     throw new InvalidOperationException("Only image files are allowed.");
                 }
 
-                fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                // fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+                var objectName = string.IsNullOrEmpty(fileName)  ? $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}": fileName;
 
                 await _logger.LogInformationAsync($"Uploading file {fileName} to bucket {_bucketName}");
 
@@ -51,7 +52,7 @@ namespace Dejan_Camilleri_SWD63B.Services
                 );
 
                 // Generate the public URL for the file
-                string publicUrl = $"https://storage.googleapis.com/{_bucketName}/{fileName}";
+                string publicUrl = $"https://storage.cloud.google.com/{_bucketName}/{fileName}?authuser=1";
 
                 await _logger.LogInformationAsync($"File uploaded successfully. Public URL: {publicUrl}");
                 return publicUrl;
@@ -77,6 +78,9 @@ namespace Dejan_Camilleri_SWD63B.Services
                 throw new ApplicationException("An unexpected error occurred during file upload.", ex);
             }
         }
+
+
+
 
         public async Task DeletePostImageAsync(string imageUrl)
         {

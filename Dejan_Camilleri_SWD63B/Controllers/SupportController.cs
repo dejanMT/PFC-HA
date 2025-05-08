@@ -29,10 +29,18 @@ namespace Dejan_Camilleri_SWD63B.Controllers
         }
 
         [HttpPost, Route("Support/UploadImage")]
-        public async Task<IActionResult> UploadImage(IFormFile file)
-        {
-            var url = await _uploader.UploadFileAsync(file, null);
+        //public async Task<IActionResult> UploadImage(IFormFile file)
+        //{
+        //    var url = await _uploader.UploadFileAsync(file, null);
 
+        //    return Ok(new { imageUrl = url });
+        //}
+
+        public async Task<IActionResult> UploadImage(IFormFile file, string ticketId)
+        {
+            // put each image under the ticket’s “folder” in the bucket:
+            var objectName = $"{ticketId}/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+            var url = await _uploader.UploadFileAsync(file, objectName);
             return Ok(new { imageUrl = url });
         }
 
@@ -74,11 +82,11 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             var tickets = await _cache.GetTicketsAsync();
 
             //if cache is empty, load from Firestore
-            if (tickets == null || !tickets.Any())
-            {
+            //if (tickets == null || !tickets.Any())
+            //{ 
                 tickets = await _repo.GetTickets();
                 await _cache.SetTicketsAsync(tickets); //populate the cache
-            }
+           // }
 
             //filter tickets by priority
             if (!string.IsNullOrEmpty(priority))
@@ -152,10 +160,10 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             // load *all* tickets, then filter in-memory:
             var all = await _repo.GetTickets();
             var closed = all
-                .Where(t => t.ClosedTicket)                                   
+                .Where(t => t.ClosedTicket)
                 .Where(t =>
-                    t.PostAuthorEmail == currentEmail                         
-                    || t.SupportAgent == currentEmail)                      
+                    t.PostAuthorEmail == currentEmail
+                    || t.SupportAgent == currentEmail)
                 .ToList();
 
             return View(closed);
@@ -192,7 +200,7 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             var ticket = await _repo.GetTicketByIdAsync(ticketId);
             if (ticket == null) return NotFound();
 
-            ticket.TicketImageUrls = new List<string>();
+            //ticket.TicketImageUrls = new List<string>();
             foreach (var obj in await _uploader.ListObjectsAsync($"{ticketId}/"))
             {
                 var signedUrl = await _uploader.GetSignedUrlAsync(obj.Name, TimeSpan.FromMinutes(15));

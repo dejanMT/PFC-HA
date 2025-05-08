@@ -8,9 +8,10 @@ namespace Dejan_Camilleri_SWD63B.Interfaces
 {
     public interface IFileUploadService
     {
-        //Task<string> UploadFileAsync(IFormFile file, string fileName, string uploaderEmail);
 
-        Task<string> UploadFileAsync(IFormFile file, string fileName);
+
+        //Task<string> UploadFileAsync(IFormFile file, string fileName);
+        Task<string> UploadFileAsync(IFormFile file, string objectName);
 
 
         Task DeletePostImageAsync(string imageUrl);

@@ -17,21 +17,21 @@
           asp-controller="Support"
           method="post"
           enctype="multipart/form-data">
-      @Html.AntiForgeryToken()
+        @Html.AntiForgeryToken()
 
-      <div class="mb-3">
-        <label asp-for="PostTitle" class="form-label">Title</label>
-        <input asp-for="PostTitle" class="form-control" />
-        <span asp-validation-for="PostTitle" class="text-danger"></span>
-      </div>
+        <div class="mb-3">
+            <label asp-for="PostTitle" class="form-label">Title</label>
+            <input asp-for="PostTitle" class="form-control" />
+            <span asp-validation-for="PostTitle" class="text-danger"></span>
+        </div>
 
-      <div class="mb-3">
-        <label asp-for="PostDescription" class="form-label">Description</label>
-        <textarea asp-for="PostDescription"
-                  class="form-control"
-                  rows="4"></textarea>
-        <span asp-validation-for="PostDescription" class="text-danger"></span>
-      </div>
+        <div class="mb-3">
+            <label asp-for="PostDescription" class="form-label">Description</label>
+            <textarea asp-for="PostDescription"
+                      class="form-control"
+                      rows="4"></textarea>
+            <span asp-validation-for="PostDescription" class="text-danger"></span>
+        </div>
 
         <div class="mb-3">
             <label asp-for="Priority" class="form-label">Priority</label>
@@ -44,7 +44,7 @@
             <span asp-validation-for="Priority" class="text-danger"></span>
         </div>
 
-      <!-- **File input must match your model’s property name exactly** -->
+        <!-- **File input must match your model’s property name exactly** -->
         <div class="mb-3">
             <label for="files">Select images</label>
             <input type="file" id="files" name="TicketImages" multiple class="form-control" accept="image/*" />
@@ -56,7 +56,8 @@
 
         <div id="hiddenUrls"></div>
 
-      <button type="submit" class="btn btn-primary">Open Ticket</button>
+
+        <button id="submitBtn" type="submit" class="btn btn-primary">Open Ticket</button>
     </form>
 
 </div>
@@ -70,11 +71,6 @@
 
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    <style>
-        .progress-bar {
-            transition: width 0.3s ease;
-        }
     </style>
     <script>
         $(function(){
@@ -154,4 +150,3 @@
 
 
 }
-
