@@ -101,4 +101,9 @@
     </div>
 </div>
 
-<a asp-action="List" class="btn btn-link">← Back to All Tickets</a>
+@if (User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value == "User"){
+    <a asp-action="MyTickets" class="btn btn-link">← Back to My Tickets</a>
+} else {
+    <a asp-action="List" class="btn btn-link">← Back to All Tickets</a>
+}
+

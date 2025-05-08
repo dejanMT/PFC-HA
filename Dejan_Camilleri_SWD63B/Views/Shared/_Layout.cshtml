@@ -1,4 +1,6 @@
-﻿<!DOCTYPE html>
+﻿@using System.Security.Claims
+
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="utf-8" />
@@ -28,22 +30,50 @@
                         @if (User.Identity.IsAuthenticated)
                         {
                             <li class="nav-item dropdown">
-                                <a id="navBarDropdown" class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <img src="@User.FindFirst("picture")?.Value" alt="User Profile Picture" class="rounded-circle" style="height:30px; width:30px;" />
+                                <a id="navBarDropdown"
+                                   class="nav-link dropdown-toggle"
+                                   href="#" role="button"
+                                   data-bs-toggle="dropdown"
+                                   aria-expanded="false">
+                                    <img src="@User.FindFirst("picture")?.Value"
+                                         class="rounded-circle"
+                                         style="height:30px; width:30px;" />
                                     <span>@User.Identity.Name</span>
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="navBarDropdown">
-                                    <li>
-                                        <a class="dropdown-item" asp-controller="Account" asp-action="Logout">Logout</a>
-                                    </li>
+                                    <li class ="text-center">
+                                        <span class="text-center">
+                                            Role: <strong> @User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value</strong>
+                                            
+                                        </span>
 
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item"
+                                           asp-controller="Account"
+                                           asp-action="SwitchRole">
+                                            Switch to
+                                            @(User.IsInRole("Technician") ? "User" : "Technician")
+                                        </a>
+                                    </li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li>
+                                        <form asp-controller="Account" asp-action="Logout" method="post">
+                                            <button type="submit" class="dropdown-item">Logout</button>
+                                        </form>
+                                    </li>
                                 </ul>
+
                             </li>
                         }
                         else
                         {
                             <li class="nav-item">
-                                <a class="nav-link" asp-controller="Account" asp-action="Login">Login with Google</a>
+                                <a class="nav-link"
+                                   asp-controller="Account"
+                                   asp-action="Login">
+                                    Login with Google
+                                </a>
                             </li>
                         }
                     </ul>

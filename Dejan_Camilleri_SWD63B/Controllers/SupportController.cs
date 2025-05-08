@@ -70,23 +70,26 @@ namespace Dejan_Camilleri_SWD63B.Controllers
 
             await _repo.AddTicket(ticket);
 
-            return RedirectToAction("List", "Support");
+            return RedirectToAction("Index", "Home");
         }
 
 
         [HttpGet("List")]
+        [Authorize(Roles = "Technician")]
         public async Task<IActionResult> List(string priority = "")
         {
+            // archive old 1 week old tickets
+            await _repo.ArchiveOldClosedTicketsAsync();
 
             //get tickets from cache
             var tickets = await _cache.GetTicketsAsync();
 
             //if cache is empty, load from Firestore
-            //if (tickets == null || !tickets.Any())
-            //{ 
+            if (tickets == null || !tickets.Any())
+            { 
                 tickets = await _repo.GetTickets();
                 await _cache.SetTicketsAsync(tickets); //populate the cache
-           // }
+            }
 
             //filter tickets by priority
             if (!string.IsNullOrEmpty(priority))
@@ -132,7 +135,7 @@ namespace Dejan_Camilleri_SWD63B.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CloseTicket(string ticketId)
         {
-            await _repo.UpdateTicketAsync(ticketId, closed: true);
+            await _repo.UpdateTicketAsync(ticketId, closed: true, closeDate: DateTimeOffset.UtcNow);
 
             // update cache
             var tickets = await _cache.GetTicketsAsync();
@@ -140,6 +143,7 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             if (t != null)
             {
                 t.ClosedTicket = true;
+                t.CloseDate = DateTimeOffset.UtcNow;
                 await _cache.SetTicketsAsync(tickets);
             }
 
@@ -154,19 +158,16 @@ namespace Dejan_Camilleri_SWD63B.Controllers
         [HttpGet]
         public async Task<IActionResult> MyTickets()
         {
-            // grab the current user’s email from their Google claim
             var currentEmail = User.FindFirst(ClaimTypes.Email)?.Value;
-
-            // load *all* tickets, then filter in-memory:
             var all = await _repo.GetTickets();
-            var closed = all
-                .Where(t => t.ClosedTicket)
-                .Where(t =>
-                    t.PostAuthorEmail == currentEmail
-                    || t.SupportAgent == currentEmail)
+
+            // include *both* open and closed for me
+            var mine = all
+                .Where(t => t.PostAuthorEmail == currentEmail
+                         || t.SupportAgent == currentEmail)
                 .ToList();
 
-            return View(closed);
+            return View(mine);
         }
 
 
@@ -175,23 +176,6 @@ namespace Dejan_Camilleri_SWD63B.Controllers
         /// </summary>
         /// <param name="ticketId"></param>
         /// <returns></returns>
-        //[HttpGet]
-        //public async Task<IActionResult> Details(string ticketId)
-        //{
-        //    if (string.IsNullOrEmpty(ticketId)) return BadRequest();
-
-        //    var ticket = await _repo.GetTicketByIdAsync(ticketId);
-        //    if (ticket == null) return NotFound();
-
-        //    foreach (var obj in await _uploader.ListObjectsAsync($"{ticketId}/"))
-        //    {
-        //        var signed = await _uploader.GetSignedUrlAsync(obj.Name, TimeSpan.FromMinutes(15));
-        //        ticket.TicketImageUrls.Add(signed);
-        //    }
-
-        //    return View(ticket);
-        //}
-
         [HttpGet]
         public async Task<IActionResult> Details(string ticketId)
         {

@@ -1,178 +1,138 @@
-﻿@using System.Linq
+﻿@model List<Dejan_Camilleri_SWD63B.Models.TicketPost>
 @using System.Security.Claims
-@model IEnumerable<Dejan_Camilleri_SWD63B.Models.TicketPost>
 
 @{
     ViewData["Title"] = "My Tickets";
 
-    // get current user
-    var currentEmail = User.FindFirst(ClaimTypes.Email)?.Value;
+    // grab current user info
+    var email = User.FindFirst(ClaimTypes.Email)?.Value;
+    var isTech = User.IsInRole("Technician");
 
-    // user’s own closed tickets
-    var myClosedTickets = Model
-        .Where(t => t.PostAuthorEmail == currentEmail && t.ClosedTicket)
-        .ToList();
+    // pick the right “mine” set and split open vs closed
+    IEnumerable<Dejan_Camilleri_SWD63B.Models.TicketPost> mine = isTech
+        ? Model.Where(t => t.SupportAgent == email)
+        : Model.Where(t => t.PostAuthorEmail == email);
 
-    // technician’s assigned (in-progress) tickets
-    var assignedTickets = Model
-        .Where(t => t.SupportAgent == currentEmail && !t.ClosedTicket)
-        .OrderByDescending(t => t.OpenDate)
-        .ToList();
-
-    // technician’s own closed tickets
-    var closedByMeTickets = Model
-        .Where(t => t.SupportAgent == currentEmail && t.ClosedTicket)
-        .OrderByDescending(t => t.CloseDate)
-        .ToList();
-
-    // simple role‐detection: technician if they have any assigned or closed-by-me
-    var isTechnician = assignedTickets.Any() || closedByMeTickets.Any();
+    var openTickets = mine.Where(t => !t.ClosedTicket).ToList();
+    var closedTickets = mine.Where(t => t.ClosedTicket).ToList();
 }
 
-<h2>@ViewData["Title"]</h2>
+<h1>@ViewData["Title"]</h1>
 
-@if (!isTechnician)
-{
-    <h4>Your Previously Closed Tickets</h4>
-    @if (!myClosedTickets.Any())
-    {
-        <div class="alert alert-info">You have no closed tickets yet.</div>
-    }
-    else
-    {
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Title</th>
-                    <th>Priority</th>
-                    <th>Opened On</th>
-                    <th>Closed On</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var t in myClosedTickets)
+<ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+        <button class="nav-link active"
+                id="open-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#open"
+                type="button"
+                role="tab"
+                aria-controls="open"
+                aria-selected="true">
+            Open (@openTickets.Count)
+        </button>
+    </li>
+    <li class="nav-item" role="presentation">
+        <button class="nav-link"
+                id="closed-tab"
+                data-bs-toggle="tab"
+                data-bs-target="#closed"
+                type="button"
+                role="tab"
+                aria-controls="closed"
+                aria-selected="false">
+            Closed (@closedTickets.Count)
+        </button>
+    </li>
+</ul>
+
+<div class="tab-content" id="ticketsTabContent">
+    <!-- OPEN TICKETS -->
+    <div class="tab-pane fade show active"
+         id="open" role="tabpanel" aria-labelledby="open-tab">
+        @if (!openTickets.Any())
+        {
+            <p>No open tickets.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var t in openTickets)
                 {
-                    <tr>
-                        <td>@t.PostTitle</td>
-                        <td>@t.Priority</td>
-                        <td>@t.OpenDate.ToLocalTime()</td>
-                        <td>
-                            @t.CloseDate?.ToLocalTime()
-                        </td>
-                        <td>
-                            <a asp-action="Details" asp-route-ticketId="@t.TicketId"
-                               class="btn btn-sm btn-info">
-                                View
-                            </a>
-                        </td>
-                    </tr>
+                    <li class="list-group-item mb-3">
+                        <h5>@t.PostTitle</h5>
+                        <dl class="row mb-2">
+                            <dt class="col-sm-3">Opened</dt>
+                            <dd class="col-sm-9">@t.OpenDate.ToLocalTime().ToString("g")</dd>
+
+                            <dt class="col-sm-3">Opened by</dt>
+                            <dd class="col-sm-9">@t.PostAuthorEmail</dd>
+
+                            @if (isTech)
+                            {
+                                <dt class="col-sm-3">Assigned to me</dt>
+                                <dd class="col-sm-9">@email</dd>
+                            }
+                            else
+                            {
+                                <dt class="col-sm-3">Assigned</dt>
+                                <dd class="col-sm-9">
+                                    @(string.IsNullOrEmpty(t.SupportAgent)
+                                        ? "Unassigned"
+                                        : t.SupportAgent)
+                                </dd>
+                            }
+                        </dl>
+                        <a asp-action="Details"
+                           asp-route-ticketId="@t.TicketId"
+                           class="btn btn-primary btn-sm">
+                            View Details
+                        </a>
+                    </li>
                 }
-            </tbody>
-        </table>
-    }
-}
-else
-{
-    <!-- Technician view: two tabs -->
-    <ul class="nav nav-tabs mb-3" id="myTicketsTab" role="tablist">
-        <li class="nav-item" role="presentation">
-            <a class="nav-link active" id="assigned-tab" data-bs-toggle="tab"
-               href="#assigned" role="tab" aria-controls="assigned"
-               aria-selected="true">
-                Assigned (@assignedTickets.Count)
-            </a>
-        </li>
-        <li class="nav-item" role="presentation">
-            <a class="nav-link" id="closed-tab" data-bs-toggle="tab"
-               href="#closed" role="tab" aria-controls="closed"
-               aria-selected="false">
-                Closed (@closedByMeTickets.Count)
-            </a>
-        </li>
-    </ul>
-
-    <div class="tab-content" id="myTicketsTabContent">
-        <!-- Assigned Tickets Tab -->
-        <div class="tab-pane fade show active" id="assigned"
-             role="tabpanel" aria-labelledby="assigned-tab">
-            @if (!assignedTickets.Any())
-            {
-                <div class="alert alert-info">No tickets currently assigned to you.</div>
-            }
-            else
-            {
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Priority</th>
-                            <th>Opened On</th>
-                            <th>Author</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var t in assignedTickets)
-                        {
-                            <tr>
-                                <td>@t.PostTitle</td>
-                                <td>@t.Priority</td>
-                                <td>@t.OpenDate.ToLocalTime():g</td>
-                                <td>@t.PostAuthorEmail</td>
-                                <td>
-                                    <a asp-action="Details" asp-route-ticketId="@t.TicketId"
-                                       class="btn btn-sm btn-info">
-                                        View
-                                    </a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-        </div>
-
-        <!-- Closed by Me Tab -->
-        <div class="tab-pane fade" id="closed"
-             role="tabpanel" aria-labelledby="closed-tab">
-            @if (!closedByMeTickets.Any())
-            {
-                <div class="alert alert-info">You haven’t closed any tickets yet.</div>
-            }
-            else
-            {
-                <table class="table table-striped">
-                    <thead>
-                        <tr>
-                            <th>Title</th>
-                            <th>Priority</th>
-                            <th>Opened On</th>
-                            <th>Closed On</th>
-                            <th>Author</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var t in closedByMeTickets)
-                        {
-                            <tr>
-                                <td>@t.PostTitle</td>
-                                <td>@t.Priority</td>
-                                <td>@t.OpenDate.ToLocalTime():g</td>
-                                <td>@t.CloseDate?.ToLocalTime().ToString("g")</td>
-                                <td>@t.PostAuthorEmail</td>
-                                <td>
-                                    <a asp-action="Details" asp-route-ticketId="@t.TicketId"
-                                       class="btn btn-sm btn-info">
-                                        View
-                                    </a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            }
-        </div>
+            </ul>
+        }
     </div>
-}
+
+    <!-- CLOSED TICKETS -->
+    <div class="tab-pane fade"
+         id="closed" role="tabpanel" aria-labelledby="closed-tab">
+        @if (!closedTickets.Any())
+        {
+            <p>No closed tickets.</p>
+        }
+        else
+        {
+            <ul class="list-group">
+                @foreach (var t in closedTickets)
+                {
+                    <li class="list-group-item mb-3">
+                        <h5>@t.PostTitle</h5>
+                        <dl class="row mb-2">
+                            <dt class="col-sm-3">Opened</dt>
+                            <dd class="col-sm-9">@t.OpenDate.ToLocalTime().ToString("g")</dd>
+
+                            <dt class="col-sm-3">Opened by</dt>
+                            <dd class="col-sm-9">@t.PostAuthorEmail</dd>
+
+                            <dt class="col-sm-3">Closed by</dt>
+                            <dd class="col-sm-9">@t.SupportAgent</dd>
+
+                            <dt class="col-sm-3">Closed at</dt>
+                            <dd class="col-sm-9">
+                                @(t.CloseDate.HasValue
+                                    ? t.CloseDate.Value.ToLocalTime().ToString("g")
+                                    : "—")
+                            </dd>
+                        </dl>
+                        <a asp-action="Details"
+                           asp-route-ticketId="@t.TicketId"
+                           class="btn btn-secondary btn-sm">
+                            View Details
+                        </a>
+                    </li>
+                }
+            </ul>
+        }
+    </div>
+</div>
