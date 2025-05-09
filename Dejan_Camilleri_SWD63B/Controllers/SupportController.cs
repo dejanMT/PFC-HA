@@ -1,8 +1,10 @@
 ﻿using Dejan_Camilleri_SWD63B.DataAccess;
 using Dejan_Camilleri_SWD63B.Interfaces;
 using Dejan_Camilleri_SWD63B.Models;
+using Google.Apis.Storage.v1.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using System.Globalization;
 using System.Security.Claims;
 
 namespace Dejan_Camilleri_SWD63B.Controllers
@@ -75,7 +77,7 @@ namespace Dejan_Camilleri_SWD63B.Controllers
 
 
         [HttpGet("List")]
-        [Authorize(Roles = "Technician")]
+        [Authorize(Roles = "authentication")]
         public async Task<IActionResult> List(string priority = "")
         {
             // archive old 1 week old tickets
@@ -85,11 +87,11 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             var tickets = await _cache.GetTicketsAsync();
 
             //if cache is empty, load from Firestore
-            if (tickets == null || !tickets.Any())
-            { 
+            //if (tickets == null || !tickets.Any())
+            //{ 
                 tickets = await _repo.GetTickets();
                 await _cache.SetTicketsAsync(tickets); //populate the cache
-            }
+           // }
 
             //filter tickets by priority
             if (!string.IsNullOrEmpty(priority))
@@ -179,12 +181,19 @@ namespace Dejan_Camilleri_SWD63B.Controllers
         [HttpGet]
         public async Task<IActionResult> Details(string ticketId)
         {
+           
             if (string.IsNullOrEmpty(ticketId)) return BadRequest();
-
+            //check if the ticketId is valid
             var ticket = await _repo.GetTicketByIdAsync(ticketId);
             if (ticket == null) return NotFound();
 
-            //ticket.TicketImageUrls = new List<string>();
+            // check if the user is allowed to see this ticket
+            if (!User.IsInRole("Technician") && ticket.PostAuthorEmail != User.FindFirst(ClaimTypes.Email)?.Value)
+            {
+                return RedirectToAction("AccessDenied", "Account");
+            }
+
+            // get the images for this ticket
             foreach (var obj in await _uploader.ListObjectsAsync($"{ticketId}/"))
             {
                 var signedUrl = await _uploader.GetSignedUrlAsync(obj.Name, TimeSpan.FromMinutes(15));
@@ -192,6 +201,26 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             }
 
             return View(ticket);
+        }
+
+        [Authorize]
+        public async Task<IActionResult> GetScreenshot(string ticketId, string objectName)
+        {
+            //Verify the current user can see this ticket
+            var email = User.FindFirst(ClaimTypes.Email)?.Value;
+            var ticket = await _repo.GetTicketByIdAsync(ticketId);
+            if (ticket == null)
+                return NotFound();
+
+            var isOwner = ticket.PostAuthorEmail == email;
+            var isTech = User.IsInRole("Technician");
+            if (!isOwner && !isTech)
+                return Forbid();
+
+            // Generate a short-lived signed URL
+            var url = await _uploader.GetSignedUrlAsync(objectName, TimeSpan.FromMinutes(15));
+
+            return Redirect(url);
         }
 
 

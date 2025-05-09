@@ -147,25 +147,41 @@ app.Run();
 
 /*
  ToDo:
-    - Implement roles and page authorizetions
-    - Fix images to show in the ticket list
+- uncomment direct load from firestore
+    - add a timer for teh cashe to get updated
 
 
-- images stored in a bucket allows only a selection of email addresses/users to access them (User who opened the 	ticket and all it)
-- User permissions/roles
+-  Function (SE4.6) is hosted & working,  No HTTP function implemented.
+
+-SE4.6 – HTTP-Function for prioritized tickets (10 marks)
+        a) Create HTTP function reading “tickets-topic” – 
+        b) Read High-priority, ack &…
+        c) Save in redis-cache
+        d) Send email (MailGun)
+        e) Log to Cloud Logging
+        f/g) Fallback to Medium/Low priority in sequence
+
+        —all steps not implemented.
+
+        => Not done.
 
 
-- SE4.6:d) Also it should send an email (tip: Use MailGun) to the technicians about this ticket; [2]
-	Sending email will also be assessed in KU3.1.
-	e) Log into Google Cloud Logging any emails sent while using the 
+- KU3.1 – Scheduled job (5 marks)
+        a) Cron job triggering HTTP function every hour 
+        b) Manual trigger sends email (tip: Use MailGun)
+
+        => Not done.
 
 
 
 
 
+==============================================================
 
 
-- CHECK IF DONE: Two Authorization attributes must be applied and working: one on the Users’ controller and
+- CHECK IF DONE:
+
+Two Authorization attributes must be applied and working: one on the Users’ controller and
 		one on the Technicians’ Controller to allow the respective roles in [1]
 
 

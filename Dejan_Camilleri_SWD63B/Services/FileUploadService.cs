@@ -23,6 +23,62 @@ namespace Dejan_Camilleri_SWD63B.Services
             _signer = UrlSigner.FromServiceAccountPath(keyPath);
         }
 
+        //public async Task<string> UploadFileAsync(IFormFile file, string fileName)
+        //{
+        //    try
+        //    {
+        //        if (!file.ContentType.StartsWith("image/"))
+        //        {
+        //            await _logger.LogWarningAsync($"Invalid file type: {file.ContentType}. Only images are allowed.");
+        //            throw new InvalidOperationException("Only image files are allowed.");
+        //        }
+
+        //        // fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
+        //        var objectName = string.IsNullOrEmpty(fileName)  ? $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}": fileName;
+
+        //        await _logger.LogInformationAsync($"Uploading file {fileName} to bucket {_bucketName}");
+
+        //        // Create a memory stream to read the file
+        //        using var memoryStream = new MemoryStream();
+        //        await file.CopyToAsync(memoryStream);
+        //        memoryStream.Position = 0;
+
+        //        // Upload the file to Google Cloud Storage
+        //        var uploadedObject = await _storageClient.UploadObjectAsync(
+        //            bucket: _bucketName,
+        //            objectName: fileName,
+        //            contentType: file.ContentType,
+        //            source: memoryStream
+        //        );
+
+        //        // Generate the public URL for the file
+        //        string publicUrl = $"https://storage.cloud.google.com/{_bucketName}/{fileName}?authuser=1";
+
+        //        await _logger.LogInformationAsync($"File uploaded successfully. Public URL: {publicUrl}");
+        //        return publicUrl;
+        //    }
+        //    catch (Google.GoogleApiException gex)
+        //    {
+        //        await _logger.LogErrorAsync("Google Cloud Storage API error", gex);
+        //        throw new ApplicationException("Cloud storage service error occurred.", gex);
+        //    }
+        //    catch (IOException ioex)
+        //    {
+        //        await _logger.LogErrorAsync("IO error while uploading file", ioex);
+        //        throw new ApplicationException("Failed to read or process file data.", ioex);
+        //    }
+        //    catch (ArgumentException aex)
+        //    {
+        //        await _logger.LogErrorAsync("Invalid argument for file upload", aex);
+        //        throw new ApplicationException("Invalid file upload parameters.", aex);
+        //    }
+        //    catch (Exception ex)
+        //    {
+        //        await _logger.LogErrorAsync("Unexpected error uploading file", ex);
+        //        throw new ApplicationException("An unexpected error occurred during file upload.", ex);
+        //    }
+        //}
+
         public async Task<string> UploadFileAsync(IFormFile file, string fileName)
         {
             try
@@ -34,7 +90,7 @@ namespace Dejan_Camilleri_SWD63B.Services
                 }
 
                 // fileName = $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-                var objectName = string.IsNullOrEmpty(fileName)  ? $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}": fileName;
+                var objectName = string.IsNullOrEmpty(fileName) ? $"{Guid.NewGuid()}{Path.GetExtension(file.FileName)}" : fileName;
 
                 await _logger.LogInformationAsync($"Uploading file {fileName} to bucket {_bucketName}");
 
@@ -55,7 +111,7 @@ namespace Dejan_Camilleri_SWD63B.Services
                 string publicUrl = $"https://storage.cloud.google.com/{_bucketName}/{fileName}?authuser=1";
 
                 await _logger.LogInformationAsync($"File uploaded successfully. Public URL: {publicUrl}");
-                return publicUrl;
+                return objectName;
             }
             catch (Google.GoogleApiException gex)
             {
@@ -78,8 +134,6 @@ namespace Dejan_Camilleri_SWD63B.Services
                 throw new ApplicationException("An unexpected error occurred during file upload.", ex);
             }
         }
-
-
 
 
         public async Task DeletePostImageAsync(string imageUrl)

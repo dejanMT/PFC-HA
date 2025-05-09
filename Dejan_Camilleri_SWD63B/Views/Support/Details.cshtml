@@ -56,13 +56,21 @@
                 @if (Model.TicketImageUrls?.Any() == true)
                 {
                     <div class="d-flex flex-wrap">
-                        @foreach (var url in Model.TicketImageUrls)
+                       @*  @foreach (var url in Model.TicketImageUrls)
                         {
                             <img src="@url"
                                  class="img-thumbnail m-1"
                                  style="max-width:200px"
                                  alt="Ticket screenshot" />
+                        } *@
+
+                        @foreach (var obj in Model.TicketImageUrls)
+                        {
+                            <img src="@Url.Action("GetScreenshot",
+                            new { ticketId = Model.TicketId, objectName = obj })"
+                                 class="img-thumbnail" />
                         }
+
                     </div>
                 }
                 else
