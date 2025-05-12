@@ -168,7 +168,22 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
             }
         }
 
+        public async Task<List<User>> GetAllUsersAsync()
+        {
+            var users = new List<User>();
+            var querySnapshot = await _db.Collection("users").GetSnapshotAsync();
 
+            foreach (var document in querySnapshot.Documents)
+            {
+                var user = document.ConvertTo<User>();
+                user.Id = document.Id;
+                users.Add(user);
+            }
 
+            _logger.LogInformation($"{users.Count} users loaded successfully.");
+            return users;
+        }
     }
+
+
 }
