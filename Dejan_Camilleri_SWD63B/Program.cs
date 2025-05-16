@@ -11,7 +11,22 @@ using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
-string projectId = "boxwood-night-449813-s9";
+string projectId = Environment.GetEnvironmentVariable("ProjectId")
+                   ?? builder.Configuration["Authentication:Google:ProjectId"]
+                   ?? throw new InvalidOperationException("ProjectId must be set");
+string databaseId = Environment.GetEnvironmentVariable("DatabaseId")
+                    ?? builder.Configuration["Authentication:Google:DatabaseId"]
+                    ?? throw new InvalidOperationException("DatabaseId must be set");
+
+builder.Services.AddSingleton(_ =>
+    new FirestoreDbBuilder
+    {
+        ProjectId = projectId,
+        DatabaseId = databaseId
+    }.Build()
+);
+
+builder.Services.AddScoped<FirestoreRepository>();
 
 builder.Logging.AddConsole();
 builder.Logging.AddDebug();
@@ -20,19 +35,19 @@ var secretClient = SecretManagerServiceClient.Create();
 string FetchSecret(string name) =>
     secretClient
         .AccessSecretVersion(
-            new SecretVersionName(projectId, name, "latest"))
+            new SecretVersionName(projectId, name, "latest")) 
         .Payload.Data.ToStringUtf8();
 
 // Configure your Cloud Logging defaults in config
-builder.Configuration["GoogleCloud:ProjectId"] = projectId;
-builder.Configuration["GoogleCloud:LogName"] = "social-media-app-log";
+builder.Configuration["ProjectId"] = projectId;
+builder.Configuration["LogName"] = "social-media-app-log";
 
 var loggerFactory = LoggerFactory.Create(logging =>
 {
     logging.AddConsole();
     logging.AddDebug();
 });
-var cloudLoggingService = new GoogleCloudLoggingService(
+var cloudLoggingService = new GoogleCloudLoggingService(    
     builder.Configuration,
     loggerFactory.CreateLogger<GoogleCloudLoggingService>(),
     builder.Environment
@@ -89,7 +104,7 @@ builder.Services.AddScoped<IFileUploadService, FileUploadService>();
 builder.Services.AddSingleton<IPubSubService, PubSubService>();
 builder.Services.AddStackExchangeRedisCache(opt =>
 {
-    opt.Configuration = builder.Configuration["Redis:ConnectionString"];
+    opt.Configuration = builder.Configuration["RedisConnectionString"];
 });
 builder.Services.AddScoped<ICacheService, RedisCacheService>();
 

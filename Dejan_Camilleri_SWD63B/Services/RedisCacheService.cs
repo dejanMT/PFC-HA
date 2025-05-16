@@ -65,6 +65,9 @@ namespace Dejan_Camilleri_SWD63B.Services
               .ToList();
         }
 
+        public void RemoveTickets()
+      => _cache.Remove(Key);
+
 
     }
 }

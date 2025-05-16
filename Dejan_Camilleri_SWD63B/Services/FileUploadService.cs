@@ -12,15 +12,29 @@ namespace Dejan_Camilleri_SWD63B.Services
         private readonly string _bucketName;
         private readonly UrlSigner _signer;
 
-        public FileUploadService(ICloudLoggingService logger, IConfiguration configuration)
+        public FileUploadService(ICloudLoggingService logger)
         {
             _logger = logger;
-            _bucketName = configuration["Authentication:Google:BucketName"];
-            GoogleCredential credentials = GoogleCredential.FromFile(configuration["Authentication:Google:ServiceAccountCredentials"]);
-            _storageClient = StorageClient.Create(credentials);
+            _bucketName = Environment.GetEnvironmentVariable("BucketName")
+                          ?? throw new InvalidOperationException("BUCKET_NAME must be set");
 
-            var keyPath = configuration["Authentication:Google:ServiceAccountCredentials"];
-            _signer = UrlSigner.FromServiceAccountPath(keyPath);
+            // Check for a mounted JSON key (local dev)
+            var keyPath = Environment.GetEnvironmentVariable("ServiceAccountCredentials");
+
+            if (!string.IsNullOrEmpty(keyPath))
+            {
+                // Local dev: use JSON key for both client & signer
+                var cred = GoogleCredential.FromFile(keyPath);
+                _storageClient = StorageClient.Create(cred);
+                _signer = UrlSigner.FromServiceAccountPath(keyPath);
+            }
+            else
+            {
+                // Cloud Run: use ADC + IAM signing (no key file)
+                var cred = GoogleCredential.GetApplicationDefault();
+                _storageClient = StorageClient.Create(cred);
+                _signer = UrlSigner.FromCredential(cred);
+            }
         }
 
         //public async Task<string> UploadFileAsync(IFormFile file, string fileName)
@@ -79,6 +93,7 @@ namespace Dejan_Camilleri_SWD63B.Services
         //    }
         //}
 
+
         public async Task<string> UploadFileAsync(IFormFile file, string fileName)
         {
             try
@@ -102,10 +117,11 @@ namespace Dejan_Camilleri_SWD63B.Services
                 // Upload the file to Google Cloud Storage
                 var uploadedObject = await _storageClient.UploadObjectAsync(
                     bucket: _bucketName,
-                    objectName: fileName,
+                    objectName: objectName,
                     contentType: file.ContentType,
                     source: memoryStream
                 );
+
 
                 // Generate the public URL for the file
                 string publicUrl = $"https://storage.cloud.google.com/{_bucketName}/{fileName}?authuser=1";
@@ -134,6 +150,8 @@ namespace Dejan_Camilleri_SWD63B.Services
                 throw new ApplicationException("An unexpected error occurred during file upload.", ex);
             }
         }
+
+
 
 
         public async Task DeletePostImageAsync(string imageUrl)

@@ -12,21 +12,21 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
         private FirestoreDb _db;
         private readonly IDistributedCache _cache;
 
-        public FirestoreRepository(ILogger<FirestoreRepository> logger, IConfiguration config, IDistributedCache cache)
+        public FirestoreRepository(ILogger<FirestoreRepository> logger, IConfiguration config, IDistributedCache cache, FirestoreDb db)
         {
             _logger = logger;
 
-            string projectId = config["Authentication:Google:ProjectId"]!;
-            string databaseId = config["Authentication:Google:DatabaseId"]!;
+            //string projectId = config["Authentication:Google:ProjectId"]!;
+            //string databaseId = config["Authentication:Google:DatabaseId"]!;
 
-            var fb = new FirestoreDbBuilder
-            {
-                ProjectId = projectId,
-                DatabaseId = databaseId
+            //var fb = new FirestoreDbBuilder
+            //{
+            //    ProjectId = projectId,
+            //    DatabaseId = databaseId
 
-            };
+            //};
 
-            _db = fb.Build();
+            _db = db;
             _cache = cache;
         }
 

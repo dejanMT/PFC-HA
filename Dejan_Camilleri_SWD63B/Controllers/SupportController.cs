@@ -4,6 +4,7 @@ using Dejan_Camilleri_SWD63B.Models;
 using Google.Apis.Storage.v1.Data;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Caching.Distributed;
 using System.Globalization;
 using System.Security.Claims;
 
@@ -74,26 +75,33 @@ namespace Dejan_Camilleri_SWD63B.Controllers
 
             return RedirectToAction("Index", "Home");
         }
-
+        [HttpPost("/cron/refresh-tickets")]
+        [AllowAnonymous]  
+        public IActionResult RefreshTickets()
+        {
+            // clear the cached list (so next List() repopulates from Firestore)
+            _cache.RemoveTickets();
+            return Ok("Tickets cache cleared");
+        }
 
         [HttpGet("List")]
-        [Authorize(Roles = "authentication")]
-        public async Task<IActionResult> List(string priority = "")
+        [Authorize(Roles = "Technician")]
+        public async Task<IActionResult> List(string priority)
         {
-            // archive old 1 week old tickets
+            // still archive old ones on each view
             await _repo.ArchiveOldClosedTicketsAsync();
 
-            //get tickets from cache
+            // fetch from cache
             var tickets = await _cache.GetTicketsAsync();
 
-            //if cache is empty, load from Firestore
-            //if (tickets == null || !tickets.Any())
-            //{ 
+            if (tickets == null || !tickets.Any())
+            {
+                // cache miss: load from Firestore and repopulate cache
                 tickets = await _repo.GetTickets();
-                await _cache.SetTicketsAsync(tickets); //populate the cache
-           // }
+                await _cache.SetTicketsAsync(tickets);
+            }
 
-            //filter tickets by priority
+            // your existing priority‐filtering…
             if (!string.IsNullOrEmpty(priority))
             {
                 tickets = tickets
@@ -112,6 +120,43 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             ViewData["SelectedPriority"] = priority;
             return View(tickets);
         }
+
+        //[HttpGet("List")]
+        //[Authorize(Roles = "Technician")]
+        //public async Task<IActionResult> List(string priority)
+        //{
+        //    // archive old 1 week old tickets
+        //    await _repo.ArchiveOldClosedTicketsAsync();
+
+        //    //get tickets from cache
+        //    var tickets = await _cache.GetTicketsAsync();
+
+        //    //if cache is empty, load from Firestore
+        //    if (tickets == null || !tickets.Any())
+        //    {
+        //        tickets = await _repo.GetTickets();
+        //        await _cache.SetTicketsAsync(tickets); //populate the cache
+        //    }
+
+        //    //filter tickets by priority
+        //    if (!string.IsNullOrEmpty(priority))
+        //    {
+        //        tickets = tickets
+        //            .Where(t => t.Priority.Equals(priority, StringComparison.OrdinalIgnoreCase))
+        //            .ToList();
+        //    }
+        //    else
+        //    {
+        //        tickets = tickets
+        //            .OrderBy(t => t.Priority == "High" ? 0
+        //                       : t.Priority == "Medium" ? 1
+        //                       : 2)
+        //            .ToList();
+        //    }
+
+        //    ViewData["SelectedPriority"] = priority;
+        //    return View(tickets);
+        //}
 
         [HttpPost("TakeTicket/{ticketId}")]
         [ValidateAntiForgeryToken]
@@ -206,21 +251,19 @@ namespace Dejan_Camilleri_SWD63B.Controllers
         [Authorize]
         public async Task<IActionResult> GetScreenshot(string ticketId, string objectName)
         {
-            //Verify the current user can see this ticket
-            var email = User.FindFirst(ClaimTypes.Email)?.Value;
             var ticket = await _repo.GetTicketByIdAsync(ticketId);
             if (ticket == null)
                 return NotFound();
 
-            var isOwner = ticket.PostAuthorEmail == email;
+            var email = User.FindFirstValue(ClaimTypes.Email);
+            var isOwner = string.Equals(ticket.PostAuthorEmail, email, StringComparison.OrdinalIgnoreCase);
             var isTech = User.IsInRole("Technician");
             if (!isOwner && !isTech)
                 return Forbid();
 
-            // Generate a short-lived signed URL
-            var url = await _uploader.GetSignedUrlAsync(objectName, TimeSpan.FromMinutes(15));
+            string signedUrl = await _uploader.GetSignedUrlAsync(objectName, TimeSpan.FromMinutes(15));
 
-            return Redirect(url);
+            return Redirect(signedUrl);
         }
 
 

@@ -8,7 +8,7 @@ namespace Dejan_Camilleri_SWD63B.Interfaces
         Task SetTicketsAsync(IEnumerable<TicketPost> tickets);
         Task RemoveTicketAsync(string ticketId);
 
-
+        void RemoveTickets();
         Task SetTicketAsync(TicketPost ticket);
         Task<List<string>> GetTechnicianEmailsAsync();
     }

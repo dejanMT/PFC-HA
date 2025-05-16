@@ -11,7 +11,7 @@ namespace Dejan_Camilleri_SWD63B.Services
 
         public PubSubService(IConfiguration config)
         {
-            var projectId = config["GoogleCloud:ProjectId"];
+            var projectId = config["ProjectId"];
             _publisher = PublisherClient.Create(TopicName.FromProjectTopic(projectId, "tickets-topic"));
         }
 

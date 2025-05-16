@@ -28,8 +28,12 @@ namespace Dejan_Camilleri_SWD63B.Services
         {
             _local = localLogger;
             _env = env;
-            _projectId = config["GoogleCloud:ProjectId"] ?? throw new ArgumentNullException("GoogleCloud:ProjectId");
-            _logName = config["GoogleCloud:LogName"] ?? "app-log";
+            //var projectId = config["ProjectId"]
+            //     ?? config["ProjectId"]
+            //     ?? throw new InvalidOperationException("ProjectId must be set");
+            //_projectId = config["ProjectId"] ?? throw new InvalidOperationException("ProjectId must be set");
+            _projectId = "boxwood-night-449813-s9";
+            _logName = config["LogName"] ?? "app-log";
             _client = LoggingServiceV2Client.Create();
             _resource = new MonitoredResource
             {
