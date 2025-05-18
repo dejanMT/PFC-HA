@@ -28,7 +28,7 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             return Challenge(props, GoogleDefaults.AuthenticationScheme);
         }
 
- 
+        // This is the callback URL that Google redirects to after sign-in
         [HttpGet]
         public async Task<IActionResult> GoogleResponse()
         {
@@ -49,7 +49,7 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             return RedirectToAction("Index", "Home");
         }
 
-
+        // Switch the user's role between Technician and User
         [HttpGet]
         [Authorize]
         public async Task<IActionResult> SwitchRole()

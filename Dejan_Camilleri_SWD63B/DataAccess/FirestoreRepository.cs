@@ -15,22 +15,15 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
         public FirestoreRepository(ILogger<FirestoreRepository> logger, IConfiguration config, IDistributedCache cache, FirestoreDb db)
         {
             _logger = logger;
-
-            //string projectId = config["Authentication:Google:ProjectId"]!;
-            //string databaseId = config["Authentication:Google:DatabaseId"]!;
-
-            //var fb = new FirestoreDbBuilder
-            //{
-            //    ProjectId = projectId,
-            //    DatabaseId = databaseId
-
-            //};
-
             _db = db;
             _cache = cache;
         }
 
-
+        /// <summary>
+        /// Adds a new ticket to the Firestore database.
+        /// </summary>
+        /// <param name="post"></param>
+        /// <returns></returns>
         public async Task AddTicket(TicketPost post)
         {
             // use the GUID in post.TicketId as the document ID
@@ -43,7 +36,10 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
         }
 
 
-
+        /// <summary>
+        /// Retrieves all tickets from the Firestore database.
+        /// </summary>
+        /// <returns></returns>
         public async Task<List<TicketPost>> GetTickets()
         {
             List<TicketPost> posts = new List<TicketPost>();
@@ -59,6 +55,14 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
 
         }
 
+        /// <summary>
+        /// Updates a ticket in the Firestore database.
+        /// </summary>
+        /// <param name="ticketId"></param>
+        /// <param name="supportAgent"></param>
+        /// <param name="closed"></param>
+        /// <param name="closeDate"></param>
+        /// <returns></returns>
         public async Task UpdateTicketAsync(string ticketId, string supportAgent = null, bool? closed = null, DateTimeOffset? closeDate = null)
         {
             var docRef = _db.Collection("posts").Document(ticketId);
@@ -78,7 +82,11 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
             }
         }
 
-
+        /// <summary>
+        /// Retrieves a ticket by its ID from the Firestore database.
+        /// </summary>
+        /// <param name="ticketId"></param>
+        /// <returns></returns>
         internal async Task<TicketPost?> GetTicketByIdAsync(string ticketId)
         {
             // cache-first omitted for clarity…
@@ -94,6 +102,12 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
             return ticket;
         }
 
+
+        /// <summary>
+        /// Retrieves a user by their email address from the Firestore database.
+        /// </summary>
+        /// <param name="email"></param>
+        /// <returns></returns>
         public async Task<User?> GetUserByEmailAsync(string email)
         {
             var query = _db
@@ -110,6 +124,11 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
             return user;
         }
 
+        /// <summary>
+        /// Creates a new user in the Firestore database.
+        /// </summary>
+        /// <param name="user"></param>
+        /// <returns></returns>
         public async Task CreateUserAsync(User user)
         {
             var doc = _db.Collection("users").Document();
@@ -117,7 +136,11 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
             user.Id = doc.Id;
         }
 
-
+        /// <summary>
+        /// Retrieves a user by their ID from the Firestore database.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <returns></returns>
         public async Task<User?> GetUserByIdAsync(string userId)
         {
             var doc = await _db.Collection("users")
@@ -129,6 +152,12 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
             return u;
         }
 
+        /// <summary>
+        /// Updates a user's role in the Firestore database.
+        /// </summary>
+        /// <param name="userId"></param>
+        /// <param name="role"></param>
+        /// <returns></returns>
         public async Task UpdateUserRoleAsync(string userId, string role)
         {
             await _db.Collection("users")
@@ -139,7 +168,10 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
                      });
         }
 
-
+        /// <summary>
+        /// Archives old closed tickets by moving them to the tickets-archive collection.
+        /// </summary>
+        /// <returns></returns>
         public async Task ArchiveOldClosedTicketsAsync()
         {
             //Find all tickets closed more than 7 days ago
@@ -168,6 +200,10 @@ namespace Dejan_Camilleri_SWD63B.DataAccess
             }
         }
 
+        /// <summary>
+        /// Retrieves all users from the Firestore database.
+        /// </summary>
+        /// <returns></returns>
         public async Task<List<User>> GetAllUsersAsync()
         {
             var users = new List<User>();

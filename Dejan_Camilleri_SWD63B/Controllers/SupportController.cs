@@ -31,22 +31,27 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             return View();
         }
 
+        /// <summary>
+        /// This action is for uploading images to the ticket.
+        /// </summary>
+        /// <param name="file"></param>
+        /// <param name="ticketId"></param>
+        /// <returns></returns>
         [HttpPost, Route("Support/UploadImage")]
-        //public async Task<IActionResult> UploadImage(IFormFile file)
-        //{
-        //    var url = await _uploader.UploadFileAsync(file, null);
-
-        //    return Ok(new { imageUrl = url });
-        //}
-
         public async Task<IActionResult> UploadImage(IFormFile file, string ticketId)
         {
             // put each image under the ticket’s “folder” in the bucket:
             var objectName = $"{ticketId}/{Guid.NewGuid()}{Path.GetExtension(file.FileName)}";
-            var url = await _uploader.UploadFileAsync(file, objectName);
+            var url = await _uploader.UploadFileAsync(file, objectName, User.FindFirst(ClaimTypes.Email)?.Value);
             return Ok(new { imageUrl = url });
         }
 
+
+        /// <summary>
+        /// This action is for opening a new ticket.
+        /// </summary>
+        /// <param name="ticket"></param>
+        /// <returns></returns>
         [HttpPost]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> OpenTicket(TicketPost ticket)
@@ -75,6 +80,11 @@ namespace Dejan_Camilleri_SWD63B.Controllers
 
             return RedirectToAction("Index", "Home");
         }
+
+        /// <summary>
+        /// This action is for the technician to refresh the tickets list.
+        /// </summary>
+        /// <returns></returns>
         [HttpPost("/cron/refresh-tickets")]
         [AllowAnonymous]  
         public IActionResult RefreshTickets()
@@ -84,6 +94,11 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             return Ok("Tickets cache cleared");
         }
 
+        /// <summary>
+        /// This action is for the technician to view the tickets.
+        /// </summary>
+        /// <param name="priority"></param>
+        /// <returns></returns>
         [HttpGet("List")]
         [Authorize(Roles = "Technician")]
         public async Task<IActionResult> List(string priority)
@@ -158,6 +173,11 @@ namespace Dejan_Camilleri_SWD63B.Controllers
         //    return View(tickets);
         //}
 
+        /// <summary>
+        /// This action is for the technician to take/assign to a ticket.
+        /// </summary>
+        /// <param name="ticketId"></param>
+        /// <returns></returns>
         [HttpPost("TakeTicket/{ticketId}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> TakeTicket(string ticketId)
@@ -178,6 +198,11 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             return RedirectToAction("List");
         }
 
+        /// <summary>
+        /// This action is for the technician to close a complete  a ticket.
+        /// </summary>
+        /// <param name="ticketId"></param>
+        /// <returns></returns>
         [HttpPost("MyTickets/{ticketId}")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> CloseTicket(string ticketId)
@@ -248,6 +273,13 @@ namespace Dejan_Camilleri_SWD63B.Controllers
             return View(ticket);
         }
 
+
+        /// <summary>
+        /// This action is for the technician to get a screenshot of a ticket.
+        /// </summary>
+        /// <param name="ticketId"></param>
+        /// <param name="objectName"></param>
+        /// <returns></returns>
         [Authorize]
         public async Task<IActionResult> GetScreenshot(string ticketId, string objectName)
         {

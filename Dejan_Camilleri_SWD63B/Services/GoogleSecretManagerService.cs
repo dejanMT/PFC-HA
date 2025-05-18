@@ -18,6 +18,11 @@ namespace Dejan_Camilleri_SWD63B.Services
             _logger.LogInformationAsync($"GoogleSecretManagerService initialized for project: {projectId}").Wait();
         }
 
+        /// <summary>
+        /// Retrieves a secret from Google Cloud Secret Manager.
+        /// </summary>
+        /// <param name="secretName"></param>
+        /// <returns></returns>
         public async Task<string> GetSecretAsync(string secretName)
         {
             await _logger.LogDebugAsync($"Retrieving secret: {secretName}");
@@ -37,6 +42,12 @@ namespace Dejan_Camilleri_SWD63B.Services
             }
         }
 
+
+        /// <summary>
+        /// Loads secrets into the configuration.
+        /// </summary>
+        /// <param name="configuration"></param>
+        /// <returns></returns>
         public async Task LoadSecretsIntoConfigurationAsync(IConfiguration configuration)
         {
             await _logger.LogInformationAsync("Loading secrets into configuration");

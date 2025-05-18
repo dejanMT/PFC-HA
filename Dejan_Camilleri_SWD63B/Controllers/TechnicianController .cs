@@ -4,6 +4,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace Dejan_Camilleri_SWD63B.Controllers
 {
+
+    /// <summary>
+    /// TechnicianController is responsible for handling requests related to the technician dashboard.
+    /// </summary>
     [Authorize(Roles = "Technician")]
     public class TechnicianController : Controller
     {

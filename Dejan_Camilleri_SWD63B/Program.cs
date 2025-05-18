@@ -42,6 +42,9 @@ string FetchSecret(string name) =>
 builder.Configuration["ProjectId"] = projectId;
 builder.Configuration["LogName"] = "social-media-app-log";
 
+builder.Services.AddSingleton<IMailService, MailGunService>();
+
+
 var loggerFactory = LoggerFactory.Create(logging =>
 {
     logging.AddConsole();

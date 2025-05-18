@@ -15,6 +15,13 @@ namespace Dejan_Camilleri_SWD63B.Services
             _publisher = PublisherClient.Create(TopicName.FromProjectTopic(projectId, "tickets-topic"));
         }
 
+
+        /// <summary>
+        /// Publish a ticket to the Pub/Sub topic with a specified priority.
+        /// </summary>
+        /// <param name="payload"></param>
+        /// <param name="priority"></param>
+        /// <returns></returns>
         public async Task PublishTicketAsync(object payload, string priority)
         {
             string json = JsonSerializer.Serialize(payload);

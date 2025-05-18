@@ -9,6 +9,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Google.Apis.Storage.v1" Version="1.69.0.3781" />
     <PackageReference Include="Google.Cloud.Firestore" Version="3.10.0" />
     <PackageReference Include="Google.Cloud.Functions.Framework" Version="2.2.1" />
     <PackageReference Include="Google.Cloud.Logging.V2" Version="4.4.0" />
